@@ -42,6 +42,7 @@ function City() {
   if (!city) {
     return <h1>City not found</h1>;
   }
+
   function findTimeClash(
     startTime: string,
     duration: number,
@@ -55,15 +56,19 @@ function City() {
 
       return newStart < existingEnd && newEnd > existingStart;
     });
+
     return conflict ?? null;
   }
-
+  const sortedItinerary = [...itinerary].sort((a, b) => {
+    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+  });
   return (
     <main>
       <h1>{city.name}</h1>
       <p>{city.country}</p>
 
       <h2>Places to visit</h2>
+
       {error && <p className="mt-2 text-red-600">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -73,22 +78,23 @@ function City() {
             place={place}
             onAdd={(startTime, duration) => {
               const durationMinutes = durationToMinutes(duration);
+
               const alreadyAdded = itinerary.some(
-                (item) => item.place.id === place.id
+                (item) => item.place.id === place.id,
               );
 
-              
               if (alreadyAdded) {
                 setError(`${place.name} is already in your itinerary.`);
                 return;
               }
 
-
               const conflict = findTimeClash(startTime, durationMinutes);
+
               if (conflict) {
                 setError(`This time overlaps with ${conflict.place.name}.`);
                 return;
               }
+
               setError("");
 
               setItinerary((current) => [
@@ -100,11 +106,6 @@ function City() {
                 },
               ]);
             }}
-            onRemove={() =>
-              setItinerary((current) =>
-                current.filter((item) => item.place.id !== place.id),
-              )
-            }
           />
         ))}
       </div>
@@ -114,15 +115,30 @@ function City() {
       <p>{itinerary.length} places selected</p>
 
       <div>
-        {itinerary.map((item) => {
+        {sortedItinerary.map((item) => {
           const endTime = addMinutesToTime(item.startTime, item.duration);
 
           return (
-            <div key={item.place.id}>
-              <p>
+            <div key={item.place.id} className="rounded-lg border p-4">
+              <p className="text-sm font-medium">
                 {item.startTime} – {endTime}
               </p>
-              <p>{item.place.name}</p>
+
+              <p className="mt-1 text-lg font-semibold">{item.place.name}</p>
+
+              <button
+                className="mt-3 rounded border px-3 py-1 text-sm"
+                onClick={() =>
+                  setItinerary((current) =>
+                    current.filter(
+                      (itineraryItem) =>
+                        itineraryItem.place.id !== item.place.id,
+                    ),
+                  )
+                }
+              >
+                Remove
+              </button>
             </div>
           );
         })}
