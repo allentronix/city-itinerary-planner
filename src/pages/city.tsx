@@ -22,29 +22,40 @@ function timeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
+function addMinutesToTime(time: string, minutes: number): string {
+  const totalMinutes = timeToMinutes(time) + minutes;
+
+  const hours = Math.floor(totalMinutes / 60) % 24;
+  const mins = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+}
+
 function City() {
   const { id } = useParams();
 
   const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
+  const [error, setError] = useState("");
 
   const city = cities.find((city) => city.id === id);
 
   if (!city) {
     return <h1>City not found</h1>;
   }
-  function hasTimeClash(
+  function findTimeClash(
     startTime: string,
-    duration: number
-  ): boolean {
+    duration: number,
+  ): ItineraryItem | null {
     const newStart = timeToMinutes(startTime);
     const newEnd = newStart + duration;
-  
-    return itinerary.some((item) => {
+
+    const conflict = itinerary.find((item) => {
       const existingStart = timeToMinutes(item.startTime);
       const existingEnd = existingStart + item.duration;
-  
+
       return newStart < existingEnd && newEnd > existingStart;
     });
+    return conflict ?? null;
   }
 
   return (
@@ -53,6 +64,7 @@ function City() {
       <p>{city.country}</p>
 
       <h2>Places to visit</h2>
+      {error && <p className="mt-2 text-red-600">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-2">
         {city.places.map((place) => (
@@ -61,12 +73,24 @@ function City() {
             place={place}
             onAdd={(startTime, duration) => {
               const durationMinutes = durationToMinutes(duration);
-            
-              if (hasTimeClash(startTime, durationMinutes)) {
-                alert("This time overlaps with another event.");
+              const alreadyAdded = itinerary.some(
+                (item) => item.place.id === place.id
+              );
+
+              
+              if (alreadyAdded) {
+                setError(`${place.name} is already in your itinerary.`);
                 return;
               }
-            
+
+
+              const conflict = findTimeClash(startTime, durationMinutes);
+              if (conflict) {
+                setError(`This time overlaps with ${conflict.place.name}.`);
+                return;
+              }
+              setError("");
+
               setItinerary((current) => [
                 ...current,
                 {
@@ -78,7 +102,7 @@ function City() {
             }}
             onRemove={() =>
               setItinerary((current) =>
-                current.filter((item) => item.place.id !== place.id)
+                current.filter((item) => item.place.id !== place.id),
               )
             }
           />
@@ -90,11 +114,18 @@ function City() {
       <p>{itinerary.length} places selected</p>
 
       <div>
-        {itinerary.map((item) => (
-          <p key={item.place.id}>
-            {item.startTime} — {item.place.name} ({item.duration} minutes)
-          </p>
-        ))}
+        {itinerary.map((item) => {
+          const endTime = addMinutesToTime(item.startTime, item.duration);
+
+          return (
+            <div key={item.place.id}>
+              <p>
+                {item.startTime} – {endTime}
+              </p>
+              <p>{item.place.name}</p>
+            </div>
+          );
+        })}
       </div>
     </main>
   );
