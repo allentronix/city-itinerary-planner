@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import type { Place } from "../data/cities";
+import type { Place, Trip } from "../data/types";
 
 interface PlaceCardProps {
   place: Place;
-  onAdd: (startTime: string, duration: string) => void;
+  trip: Trip | null;
+  onAdd: (date: string, startTime: string, duration: string) => void;
 }
-
 function isValidDuration(duration: string): boolean {
   const match = duration.match(/^(\d+):([0-5]\d)$/);
 
@@ -20,10 +20,12 @@ function isValidDuration(duration: string): boolean {
   return hours > 0 || minutes > 0;
 }
 
-function PlaceCard({ place, onAdd }: PlaceCardProps) {
+function PlaceCard({ place, trip,onAdd }: PlaceCardProps) {
   const [startTime, setStartTime] = useState("09:00");
   const [duration, setDuration] = useState("1:00");
   const [durationError, setDurationError] = useState("");
+  const [date, setDate] = useState("");
+  const [dateError, setDateError] = useState("");
 
   return (
     <div className="rounded-lg border p-4 shadow-sm">
@@ -34,11 +36,29 @@ function PlaceCard({ place, onAdd }: PlaceCardProps) {
       <p className="mt-2 text-sm">Best time: {place.bestTime}</p>
 
       <div className="mt-4">
+        <label className="block text-sm font-medium">Date</label>
+
+        <input
+          type="date"
+          value={date}
+          min={trip?.startDate}
+          max={trip?.endDate}
+          onChange={(event) => {
+            setDate(event.target.value);
+            setDateError("");
+          }}
+          className="mt-1 rounded border p-2"
+        />
+        {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
+      </div>
+
+      <div className="mt-4">
         <label className="block text-sm font-medium">Start time</label>
 
         <input
           type="time"
           value={startTime}
+          min={new Date().toISOString().split("T")[0]}
           onChange={(event) => setStartTime(event.target.value)}
           className="mt-1 rounded border p-2"
         />
@@ -62,13 +82,20 @@ function PlaceCard({ place, onAdd }: PlaceCardProps) {
       <Button
         className="mt-4"
         onClick={() => {
+          if (!date) {
+            setDateError("Please choose a date.");
+            return;
+          }
+
+          setDateError("");
+
           if (!isValidDuration(duration)) {
             setDurationError("Enter a duration like 1:45.");
             return;
           }
 
           setDurationError("");
-          onAdd(startTime, duration);
+          onAdd(date, startTime, duration);
         }}
       >
         Add to itinerary

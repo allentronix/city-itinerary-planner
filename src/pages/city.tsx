@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import type { Place } from "../data/cities";
+import type { ItineraryItem, Trip } from "../data/types";
 import cities from "../data/cities";
 import PlaceCard from "../components/place-card";
-
-interface ItineraryItem {
-  place: Place;
-  startTime: string;
-  duration: number;
-}
+import Itinerary from "../components/itinerary";
+import TripForm from "../components/trip-form";
 
 function durationToMinutes(duration: string): number {
   const [hours, minutes] = duration.split(":").map(Number);
@@ -21,20 +17,43 @@ function timeToMinutes(time: string): number {
 
   return hours * 60 + minutes;
 }
+function formatDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
-function addMinutesToTime(time: string, minutes: number): string {
-  const totalMinutes = timeToMinutes(time) + minutes;
+function calculateTripDays(startDate: string, endDate: string): number {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
 
-  const hours = Math.floor(totalMinutes / 60) % 24;
-  const mins = totalMinutes % 60;
+  const difference = end.getTime() - start.getTime();
 
-  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+  return Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
+}
+
+function getTripDates(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+
+  const current = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  while (current <= end) {
+    dates.push(current.toISOString().split("T")[0]);
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
 }
 
 function City() {
   const { id } = useParams();
 
   const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
+  const [trip, setTrip] = useState<Trip | null>(null);
   const [error, setError] = useState("");
 
   const city = cities.find((city) => city.id === id);
@@ -44,6 +63,7 @@ function City() {
   }
 
   function findTimeClash(
+    date: string,
     startTime: string,
     duration: number,
   ): ItineraryItem | null {
@@ -51,6 +71,9 @@ function City() {
     const newEnd = newStart + duration;
 
     const conflict = itinerary.find((item) => {
+      if (item.date !== date) {
+        return false;
+      }
       const existingStart = timeToMinutes(item.startTime);
       const existingEnd = existingStart + item.duration;
 
@@ -59,90 +82,125 @@ function City() {
 
     return conflict ?? null;
   }
-  const sortedItinerary = [...itinerary].sort((a, b) => {
-    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
-  });
+
   return (
     <main>
       <h1>{city.name}</h1>
       <p>{city.country}</p>
 
-      <h2>Places to visit</h2>
+      <TripForm
+        cityId={city.id}
+        onCreateTrip={(startDate, endDate) => {
+          setTrip({
+            cityId: city.id,
+            startDate,
+            endDate,
+          });
+        }}
+      />
 
-      {error && <p className="mt-2 text-red-600">{error}</p>}
+      {trip && (
+        <div className="mt-4 rounded-lg border p-4">
+          <p className="font-semibold">Your trip</p>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {city.places.map((place) => (
-          <PlaceCard
-            key={place.id}
-            place={place}
-            onAdd={(startTime, duration) => {
-              const durationMinutes = durationToMinutes(duration);
+          {trip && (
+            <div className="mt-4 rounded-lg border p-4">
+              <p className="font-semibold">Your trip</p>
 
-              const alreadyAdded = itinerary.some(
-                (item) => item.place.id === place.id,
-              );
-
-              if (alreadyAdded) {
-                setError(`${place.name} is already in your itinerary.`);
-                return;
-              }
-
-              const conflict = findTimeClash(startTime, durationMinutes);
-
-              if (conflict) {
-                setError(`This time overlaps with ${conflict.place.name}.`);
-                return;
-              }
-
-              setError("");
-
-              setItinerary((current) => [
-                ...current,
-                {
-                  place,
-                  startTime,
-                  duration: durationMinutes,
-                },
-              ]);
-            }}
-          />
-        ))}
-      </div>
-
-      <h2>My Itinerary</h2>
-
-      <p>{itinerary.length} places selected</p>
-
-      <div>
-        {sortedItinerary.map((item) => {
-          const endTime = addMinutesToTime(item.startTime, item.duration);
-
-          return (
-            <div key={item.place.id} className="rounded-lg border p-4">
-              <p className="text-sm font-medium">
-                {item.startTime} – {endTime}
+              <p className="text-sm">
+                {formatDate(trip.startDate)} → {formatDate(trip.endDate)}
               </p>
 
-              <p className="mt-1 text-lg font-semibold">{item.place.name}</p>
+              <p className="mt-1 text-sm">
+                {calculateTripDays(trip.startDate, trip.endDate)} days
+              </p>
 
-              <button
-                className="mt-3 rounded border px-3 py-1 text-sm"
-                onClick={() =>
-                  setItinerary((current) =>
-                    current.filter(
-                      (itineraryItem) =>
-                        itineraryItem.place.id !== item.place.id,
-                    ),
-                  )
-                }
-              >
-                Remove
-              </button>
+              <div className="mt-4 space-y-2">
+                {getTripDates(trip.startDate, trip.endDate).map(
+                  (date, index) => (
+                    <div key={date} className="rounded border p-2 text-sm">
+                      Day {index + 1} — {formatDate(date)}
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          <p className="text-sm">
+            {formatDate(trip.startDate)} → {formatDate(trip.endDate)}
+          </p>
+          <p className="mt-1 text-sm">
+            {calculateTripDays(trip.startDate, trip.endDate)} days
+          </p>
+        </div>
+      )}
+      {trip ? (
+        <>
+          <h2>Places to visit</h2>
+
+          {error && <p className="mt-2 text-red-600">{error}</p>}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {city.places.map((place) => (
+              <PlaceCard
+                key={place.id}
+                place={place}
+                trip={trip}
+                onAdd={(date, startTime, duration) => {
+                  const durationMinutes = durationToMinutes(duration);
+
+                  const alreadyAdded = itinerary.some(
+                    (item) => item.place.id === place.id,
+                  );
+
+                  if (alreadyAdded) {
+                    setError(`${place.name} is already in your itinerary.`);
+                    return;
+                  }
+
+                  const conflict = findTimeClash(
+                    date,
+                    startTime,
+                    durationMinutes,
+                  );
+
+                  if (conflict) {
+                    setError(`This time overlaps with ${conflict.place.name}.`);
+                    return;
+                  }
+
+                  setError("");
+
+                  setItinerary((current) => [
+                    ...current,
+                    {
+                      place,
+                      date,
+                      startTime,
+                      duration: durationMinutes,
+                    },
+                  ]);
+                }}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="mt-6">Create your trip first to start adding places.</p>
+      )}
+
+      {trip && (
+        <Itinerary
+          itinerary={itinerary}
+          trip={trip}
+          onRemove={(placeId) =>
+            setItinerary((current) =>
+              current.filter((item) => item.place.id !== placeId),
+            )
+          }
+        />
+      )}
     </main>
   );
 }

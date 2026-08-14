@@ -1,16 +1,4 @@
-export interface Place {
-  id: string;
-  name: string;
-  description: string;
-  bestTime: string;
-}
-
-export interface City {
-  id: string;
-  name: string;
-  country: string;
-  places: Place[];
-}
+import type { City } from "./types";
 
 const cities: City[] = [
   {
