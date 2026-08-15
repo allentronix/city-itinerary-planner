@@ -3,10 +3,17 @@ import { Button } from "./ui/button";
 
 interface TripFormProps {
   cityId: string;
+  initialStartDate?: string;
+  initialEndDate?: string;
   onCreateTrip: (startDate: string, endDate: string) => void;
 }
 
-function TripForm({ cityId, onCreateTrip }: TripFormProps) {
+function TripForm({
+  cityId,
+  initialStartDate = "",
+  initialEndDate = "",
+  onCreateTrip,
+}: TripFormProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
@@ -28,14 +35,10 @@ function TripForm({ cityId, onCreateTrip }: TripFormProps) {
 
   return (
     <section className="rounded-lg border p-4">
-      <h2 className="text-xl font-semibold">
-        Plan your trip to {cityId}
-      </h2>
+      <h2 className="text-xl font-semibold">Plan your trip to {cityId}</h2>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium">
-          Start date
-        </label>
+        <label className="block text-sm font-medium">Start date</label>
 
         <input
           type="date"
@@ -50,9 +53,7 @@ function TripForm({ cityId, onCreateTrip }: TripFormProps) {
       </div>
 
       <div className="mt-3">
-        <label className="block text-sm font-medium">
-          End date
-        </label>
+        <label className="block text-sm font-medium">End date</label>
 
         <input
           type="date"
@@ -66,11 +67,7 @@ function TripForm({ cityId, onCreateTrip }: TripFormProps) {
         />
       </div>
 
-      {error && (
-        <p className="mt-2 text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <Button className="mt-4" onClick={handleSubmit}>
         Create trip

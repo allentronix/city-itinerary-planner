@@ -5,6 +5,7 @@ import cities from "../data/cities";
 import PlaceCard from "../components/place-card";
 import Itinerary from "../components/itinerary";
 import TripForm from "../components/trip-form";
+import { getTripDates } from "../utils/dates"
 
 function durationToMinutes(duration: string): number {
   const [hours, minutes] = duration.split(":").map(Number);
@@ -34,26 +35,14 @@ function calculateTripDays(startDate: string, endDate: string): number {
   return Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
 }
 
-function getTripDates(startDate: string, endDate: string): string[] {
-  const dates: string[] = [];
 
-  const current = new Date(`${startDate}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
-
-  while (current <= end) {
-    dates.push(current.toISOString().split("T")[0]);
-
-    current.setDate(current.getDate() + 1);
-  }
-
-  return dates;
-}
 
 function City() {
   const { id } = useParams();
 
   const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
   const [trip, setTrip] = useState<Trip | null>(null);
+  const [isEditingTrip, setIsEditingTrip] = useState(false);
   const [error, setError] = useState("");
 
   const city = cities.find((city) => city.id === id);
@@ -87,18 +76,42 @@ function City() {
     <main>
       <h1>{city.name}</h1>
       <p>{city.country}</p>
+      {(!trip || isEditingTrip) && (
+        <TripForm
+          cityId={city.id}
+          onCreateTrip={(startDate, endDate) => {
+            const affectedItems = itinerary.filter(
+              (item) => item.date < startDate || item.date > endDate,
+            );
 
-      <TripForm
-        cityId={city.id}
-        onCreateTrip={(startDate, endDate) => {
-          setTrip({
-            cityId: city.id,
-            startDate,
-            endDate,
-          });
-        }}
-      />
+            if (affectedItems.length > 0) {
+              const confirmed = window.confirm(
+                `${affectedItems.length} itinerary ${
+                  affectedItems.length === 1 ? "item is" : "items are"
+                } outside your new trip dates and will be removed. Continue?`,
+              );
 
+              if (!confirmed) {
+                return;
+              }
+            }
+
+            setTrip({
+              cityId: city.id,
+              startDate,
+              endDate,
+            });
+
+            setItinerary((current) =>
+              current.filter(
+                (item) => item.date >= startDate && item.date <= endDate,
+              ),
+            );
+
+            setIsEditingTrip(false);
+          }}
+        />
+      )}
       {trip && (
         <div className="mt-4 rounded-lg border p-4">
           <p className="font-semibold">Your trip</p>
@@ -124,6 +137,12 @@ function City() {
                   ),
                 )}
               </div>
+              <button
+                className="mt-4 rounded border px-3 py-1 text-sm"
+                onClick={() => setIsEditingTrip(true)}
+              >
+                Edit trip
+              </button>
             </div>
           )}
 
