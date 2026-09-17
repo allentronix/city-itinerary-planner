@@ -17,6 +17,7 @@ export interface Place {
     date: string;
     startTime: string;
     duration: number;
+    travelTime: number;
   }
   export interface Trip {
     cityId: string;
