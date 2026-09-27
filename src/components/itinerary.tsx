@@ -1,236 +1,239 @@
-import type { ItineraryItem, Trip } from "../data/types";
+import type { ItineraryItem, Place, Schedule, Trip } from "../data/types";
 
 import { useState } from "react";
 
-import { getTripDates } from "../utils/dates";
+import {
+  formatShortDate,
+  formatWeekdayDate,
+  getTripDates,
+} from "../utils/dates";
+
+import { addMinutesToTime, formatDuration, timeToMinutes } from "../utils/time";
 
 import EditItineraryItem from "./edit-itinerary-item";
+
+import { Button } from "./ui/button";
 
 interface ItineraryProps {
   itinerary: ItineraryItem[];
   trip: Trip;
-  onRemove: (placeId: string) => void;
-  onEdit: (
-    placeId: string,
-    date: string,
-    startTime: string,
-    duration: number,
-    travelTime: number,
-  ) => string | null;
+  isTimeAvailable: (schedule: Schedule, excludeItemId: string) => boolean;
+  getUnavailableDates: (place: Place, excludeItemId: string) => string[];
+  onRemove: (itemId: string) => void;
+  onEdit: (item: ItineraryItem, schedule: Schedule) => string | null;
 }
 
-function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-
-  return hours * 60 + minutes;
-}
-
-function addMinutesToTime(time: string, minutes: number): string {
-  const totalMinutes = timeToMinutes(time) + minutes;
-
-  const hours = Math.floor(totalMinutes / 60) % 24;
-
-  const mins = totalMinutes % 60;
-
-  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
-}
+// A planned day is shown in full; a run of empty days is collapsed into one line.
+type DaySection =
+  | { kind: "planned"; date: string; dayNumber: number; items: ItineraryItem[] }
+  | { kind: "empty"; dates: string[]; firstDayNumber: number };
 
 function getTimeDifference(startTime: string, endTime: string): number {
   return timeToMinutes(endTime) - timeToMinutes(startTime);
 }
 
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
+function groupIntoSections(
+  tripDates: string[],
+  itinerary: ItineraryItem[],
+): DaySection[] {
+  const sortedItinerary = [...itinerary].sort(
+    (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
+  );
 
-  const remainingMinutes = minutes % 60;
+  const sections: DaySection[] = [];
 
-  if (hours === 0) {
-    return `${remainingMinutes}m`;
-  }
+  tripDates.forEach((date, index) => {
+    const items = sortedItinerary.filter((item) => item.date === date);
 
-  if (remainingMinutes === 0) {
-    return `${hours}h`;
-  }
+    const lastSection = sections[sections.length - 1];
 
-  return `${hours}h ${remainingMinutes}m`;
-}
-
-function formatDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function Itinerary({ itinerary, trip, onRemove, onEdit }: ItineraryProps) {
-  const [editingPlaceId, setEditingPlaceId] = useState<string | null>(null);
-
-  const sortedItinerary = [...itinerary].sort((a, b) => {
-    if (a.date !== b.date) {
-      return a.date.localeCompare(b.date);
+    if (items.length > 0) {
+      sections.push({ kind: "planned", date, dayNumber: index + 1, items });
+    } else if (lastSection?.kind === "empty") {
+      lastSection.dates.push(date);
+    } else {
+      sections.push({
+        kind: "empty",
+        dates: [date],
+        firstDayNumber: index + 1,
+      });
     }
-
-    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
   });
+
+  return sections;
+}
+
+function EmptyDays({
+  dates,
+  firstDayNumber,
+}: {
+  dates: string[];
+  firstDayNumber: number;
+}) {
+  const lastDayNumber = firstDayNumber + dates.length - 1;
+
+  const label =
+    dates.length === 1
+      ? `Day ${firstDayNumber} · ${formatShortDate(dates[0])}`
+      : `Days ${firstDayNumber}–${lastDayNumber} · ${formatShortDate(
+          dates[0],
+        )} – ${formatShortDate(dates[dates.length - 1])}`;
+
+  return (
+    <p className="mt-6 border border-dashed bg-white p-3 text-sm text-slate-500">
+      <span className="font-medium text-gray-700">{label}</span> · Nothing
+      planned yet
+    </p>
+  );
+}
+
+function Itinerary({
+  itinerary,
+  trip,
+  isTimeAvailable,
+  getUnavailableDates,
+  onRemove,
+  onEdit,
+}: ItineraryProps) {
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const tripDates = getTripDates(trip.startDate, trip.endDate);
 
-  const groupedItinerary = sortedItinerary.reduce(
-    (groups, item) => {
-      if (!groups[item.date]) {
-        groups[item.date] = [];
-      }
+  const sections = groupIntoSections(tripDates, itinerary);
 
-      groups[item.date].push(item);
+  const plannedDays = sections.filter(
+    (section) => section.kind === "planned",
+  ).length;
 
-      return groups;
-    },
-    {} as Record<string, ItineraryItem[]>,
-  );
+  function renderItem(item: ItineraryItem, nextItem?: ItineraryItem) {
+    const endTime = addMinutesToTime(item.startTime, item.duration);
+
+    const freeTime = nextItem
+      ? getTimeDifference(endTime, nextItem.startTime) - item.travelTime
+      : 0;
+
+    return (
+      <div key={item.id}>
+        <div className="border bg-white p-4">
+          <div className="flex items-start gap-4">
+            <div className="w-16 shrink-0 text-sm font-semibold">
+              {item.startTime}
+
+              <span className="block text-xs font-normal text-gray-500">
+                until {endTime}
+              </span>
+            </div>
+
+            <div className="border-l pl-4">
+              <p className="font-serif text-lg">{item.place.name}</p>
+
+              <p className="mt-1 text-sm text-gray-600">
+                {item.place.description}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Best time: {item.place.bestTime}
+              </p>
+
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditingItemId(item.id)}
+                >
+                  Edit
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Remove ${item.place.name} from your itinerary?`,
+                      )
+                    ) {
+                      onRemove(item.id);
+                    }
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {editingItemId === item.id && (
+            <EditItineraryItem
+              item={item}
+              trip={trip}
+              isTimeAvailable={(schedule) => isTimeAvailable(schedule, item.id)}
+              unavailableDates={getUnavailableDates(item.place, item.id)}
+              onCancel={() => setEditingItemId(null)}
+              onSave={(schedule) => {
+                const errorMessage = onEdit(item, schedule);
+
+                if (!errorMessage) {
+                  setEditingItemId(null);
+                }
+
+                return errorMessage;
+              }}
+            />
+          )}
+        </div>
+
+        {nextItem && item.travelTime > 0 && (
+          <p className="py-2 text-center text-xs text-gray-400">
+            ↓ {formatDuration(item.travelTime)} travel to next place
+          </p>
+        )}
+
+        {nextItem && freeTime > 0 && (
+          <p className="py-2 text-center text-xs text-gray-400">
+            · {formatDuration(freeTime)} free time
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <section>
-      <h2 className="text-2xl font-bold">My Itinerary</h2>
+      <h2 className="font-serif text-3xl tracking-tight">My Itinerary</h2>
 
       <p className="mt-1 text-sm text-gray-500">
-        {itinerary.length} {itinerary.length === 1 ? "place" : "places"}{" "}
-        selected
+        {plannedDays} of {tripDates.length}{" "}
+        {tripDates.length === 1 ? "day" : "days"} planned · {itinerary.length}{" "}
+        {itinerary.length === 1 ? "place" : "places"}
       </p>
 
-      <div>
-        {tripDates.map((date) => {
-          const items = groupedItinerary[date] ?? [];
+      {sections.map((section) =>
+        section.kind === "empty" ? (
+          <EmptyDays
+            key={section.dates[0]}
+            dates={section.dates}
+            firstDayNumber={section.firstDayNumber}
+          />
+        ) : (
+          <div key={section.date}>
+            <div className="mt-8 border-b pb-2">
+              <h3 className="font-serif text-xl">Day {section.dayNumber}</h3>
 
-          return (
-            <div key={date}>
-              <div className="mt-8 border-b pb-2">
-                <h3 className="text-xl font-semibold">
-                  Day {tripDates.indexOf(date) + 1}
-                </h3>
+              <p className="text-sm text-gray-500">
+                {formatWeekdayDate(section.date)} · {section.items.length}{" "}
+                {section.items.length === 1 ? "place" : "places"} planned
+              </p>
+            </div>
 
-                <p className="text-sm text-gray-500">
-                  {formatDate(date)} · {items.length}{" "}
-                  {items.length === 1 ? "place" : "places"} planned
-                </p>
-              </div>
-
-              {items.length === 0 ? (
-                <p className="mt-3 rounded-md border border-dashed p-3 text-sm text-gray-500">
-                  No places planned yet.
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {items.map((item, index) => {
-                    const endTime = addMinutesToTime(
-                      item.startTime,
-                      item.duration,
-                    );
-
-                    const nextItem = items[index + 1];
-
-                    let freeTime = 0;
-
-                    if (nextItem) {
-                      const availableTime = getTimeDifference(
-                        endTime,
-                        nextItem.startTime,
-                      );
-
-                      freeTime = availableTime - item.travelTime;
-                    }
-
-                    return (
-                      <div key={item.place.id}>
-                        <div className="rounded-lg border bg-white p-4 shadow-sm">
-                          <div className="flex items-start gap-4 rounded-md bg-gray-50 p-2">
-                            <div className="w-24 shrink-0 text-sm font-semibold">
-                              {item.startTime}
-
-                              <span className="block text-xs font-normal text-gray-500">
-                                until {endTime}
-                              </span>
-                            </div>
-
-                            <div className="border-l pl-4">
-                              <p className="text-lg font-bold">
-                                {item.place.name}
-                              </p>
-
-                              <p className="mt-1 text-sm text-gray-600">
-                                {item.place.description}
-                              </p>
-
-                              <p className="mt-2 text-xs text-gray-500">
-                                Best time: {item.place.bestTime}
-                              </p>
-
-                              <button
-                                className="mr-2 mt-3 cursor-pointer rounded border px-3 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                                onClick={() => setEditingPlaceId(item.place.id)}
-                              >
-                                Edit
-                              </button>
-
-                              <button
-                                className="mr-2 mt-3 cursor-pointer rounded border px-3 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                                onClick={() => onRemove(item.place.id)}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-
-                          {editingPlaceId === item.place.id && (
-                            <EditItineraryItem
-                              item={item}
-                              trip={trip}
-                              onCancel={() => setEditingPlaceId(null)}
-                              onSave={(
-                                date,
-                                startTime,
-                                duration,
-                                travelTime,
-                              ) => {
-                                const errorMessage = onEdit(
-                                  item.place.id,
-                                  date,
-                                  startTime,
-                                  duration,
-                                  travelTime,
-                                );
-                                
-                                if (!errorMessage) {
-                                  setEditingPlaceId(null);
-                                }
-                                
-                                return errorMessage;
-                              }}
-                            />
-                          )}
-                        </div>
-
-                        {nextItem && item.travelTime > 0 && (
-                          <p className="py-2 text-center text-xs text-gray-400">
-                            ↓ {formatDuration(item.travelTime)} travel to next
-                            place
-                          </p>
-                        )}
-
-                        {nextItem && freeTime > 0 && (
-                          <p className="py-2 text-center text-xs text-gray-400">
-                            · {formatDuration(freeTime)} free time
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="mt-3 space-y-3">
+              {section.items.map((item, index) =>
+                renderItem(item, section.items[index + 1]),
               )}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        ),
+      )}
     </section>
   );
 }

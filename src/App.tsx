@@ -1,20 +1,38 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import Home from "./pages/home";
 import About from "./pages/about";
-import City from "./pages/City";
+import CityPage from "./pages/city";
+import TripsPage from "./pages/trips";
+import SavedTripPage from "./pages/saved-trip";
+import NotFound from "./pages/not-found";
 import Navbar from "./components/navbar";
 
-function App() {
+function Layout() {
   return (
-    <BrowserRouter>
+    <>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/city/:id" element={<City />} />
-      </Routes>
-    </BrowserRouter>
+      <Outlet />
+    </>
   );
+}
+
+// A data router is needed for useBlocker, which warns before leaving an unsaved trip.
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: [
+      { path: "/", element: <Home /> },
+      { path: "/about", element: <About /> },
+      { path: "/city/:id", element: <CityPage /> },
+      { path: "/trips", element: <TripsPage /> },
+      { path: "/trips/:tripId", element: <SavedTripPage /> },
+      { path: "*", element: <NotFound /> },
+    ],
+  },
+]);
+
+function App() {
+  return <RouterProvider router={router} />;
 }
 
 export default App;

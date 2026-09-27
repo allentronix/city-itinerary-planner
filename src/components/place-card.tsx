@@ -1,123 +1,147 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import type { Place, Trip } from "../data/types";
+import ScheduleFields from "./schedule-fields";
+import type { Place, PlaceCategory, Schedule, Trip } from "../data/types";
+import { getSuggestedStartTime } from "../utils/best-time";
+import { getTripDates } from "../utils/dates";
+import { canVisitDaily } from "../utils/places";
+import { findAvailableTime } from "../utils/time";
+
+const DEFAULT_DURATION = 60;
+
+// Same size as the "Plan a trip" button in the navbar.
+const LARGE_BUTTON_CLASS = "h-auto px-5 py-3 text-base";
+
+const CATEGORY_LABELS: Record<PlaceCategory, string> = {
+  attraction: "Sight",
+  restaurant: "Restaurant",
+  cafe: "Coffee shop",
+};
 
 interface PlaceCardProps {
   place: Place;
-  trip: Trip | null;
-  onAdd: (date: string, startTime: string, duration: string ,travelTime: string,) => void;
+  trip: Trip;
+  bookedDates: string[];
+  unavailableDates: string[];
+  isTimeAvailable: (schedule: Schedule) => boolean;
+  onAdd: (schedule: Schedule) => string | null;
 }
-function isValidDuration(duration: string): boolean {
-  const match = duration.match(/^(\d+):([0-5]\d)$/);
 
-  if (!match) {
-    return false;
+function PlaceCard({
+  place,
+  trip,
+  bookedDates,
+  unavailableDates,
+  isTimeAvailable,
+  onAdd,
+}: PlaceCardProps) {
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [error, setError] = useState("");
+
+  const tripDates = getTripDates(trip.startDate, trip.endDate);
+
+  const availableDates = tripDates.filter(
+    (date) => !unavailableDates.includes(date),
+  );
+
+  const isFullyBooked = availableDates.length === 0;
+
+  const preferredStartTime = getSuggestedStartTime(place.bestTime);
+
+  const bookedDayNumbers = tripDates
+    .map((date, index) => (bookedDates.includes(date) ? index + 1 : null))
+    .filter((dayNumber) => dayNumber !== null);
+
+  function handleOpen() {
+    const draft: Schedule = {
+      date: availableDates[0],
+      startTime: preferredStartTime,
+      duration: DEFAULT_DURATION,
+      travelTime: 0,
+    };
+
+    // Start at the place's best time, or the next free slot after it.
+    draft.startTime = findAvailableTime(preferredStartTime, (startTime) =>
+      isTimeAvailable({ ...draft, startTime }),
+    );
+
+    setSchedule(draft);
+    setError("");
   }
 
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
+  function handleClose() {
+    setSchedule(null);
+    setError("");
+  }
 
-  return hours > 0 || minutes > 0;
-}
+  function handleAdd(value: Schedule) {
+    const errorMessage = onAdd(value);
 
-function PlaceCard({ place, trip, onAdd }: PlaceCardProps) {
-  const [startTime, setStartTime] = useState("09:00");
-  const [duration, setDuration] = useState("1:00");
-  const [travelTime, setTravelTime] = useState("0");
-  const [durationError, setDurationError] = useState("");
-  const [date, setDate] = useState("");
-  const [dateError, setDateError] = useState("");
+    if (errorMessage) {
+      setError(errorMessage);
+      return;
+    }
+
+    handleClose();
+  }
+
+  // Fall back to the first open day if the chosen one is no longer available.
+  const current =
+    schedule && !availableDates.includes(schedule.date)
+      ? { ...schedule, date: availableDates[0] }
+      : schedule;
 
   return (
-    <div className="rounded-lg border p-4 shadow-sm">
-      <h3 className="text-lg font-semibold">{place.name}</h3>
+    <div className="border bg-white p-5">
+      <p className="text-xs font-medium tracking-wider text-emerald-700 uppercase">
+        {CATEGORY_LABELS[place.category]}
+      </p>
 
-      <p className="mt-2">{place.description}</p>
+      <h3 className="mt-1 font-serif text-xl">{place.name}</h3>
 
-      <p className="mt-2 text-sm">Best time: {place.bestTime}</p>
+      <p className="mt-2 text-sm text-slate-600">{place.description}</p>
 
-      <div className="mt-4">
-        <label className="block text-sm font-medium">Date</label>
+      <p className="mt-3 text-sm text-slate-500">Best time: {place.bestTime}</p>
 
-        <input
-          type="date"
-          value={date}
-          min={trip?.startDate}
-          max={trip?.endDate}
-          onChange={(event) => {
-            setDate(event.target.value);
-            setDateError("");
-          }}
-          className="mt-1 rounded border p-2"
-        />
-        {dateError && <p className="mt-1 text-sm text-red-600">{dateError}</p>}
-      </div>
-
-      <div className="mt-4">
-        <label className="block text-sm font-medium">Start time</label>
-
-        <input
-          type="time"
-          value={startTime}
-          min={new Date().toISOString().split("T")[0]}
-          onChange={(event) => setStartTime(event.target.value)}
-          className="mt-1 rounded border p-2"
-        />
-      </div>
-
-      <div className="mt-3">
-        <label className="block text-sm font-medium">Duration</label>
-
-        <input
-          type="text"
-          value={duration}
-          onChange={(event) => setDuration(event.target.value)}
-          placeholder="1:45"
-          className="mt-1 rounded border p-2"
-        />
-        <div className="mt-3">
-          <label className="block text-sm font-medium">
-            Travel time to next place
-          </label>
-
-          <select
-            value={travelTime}
-            onChange={(event) => setTravelTime(event.target.value)}
-            className="mt-1 rounded border p-2"
-          >
-            <option value="0">0 minutes</option>
-            <option value="15">15 minutes</option>
-            <option value="30">30 minutes</option>
-            <option value="45">45 minutes</option>
-            <option value="60">1 hour</option>
-          </select>
-        </div>
-      </div>
-      {durationError && (
-        <p className="mt-1 text-sm text-red-600">{durationError}</p>
+      {canVisitDaily(place) && bookedDayNumbers.length > 0 && (
+        <p className="mt-1 text-sm text-slate-500">
+          Planned for Day {bookedDayNumbers.join(", Day ")}
+        </p>
       )}
 
-      <Button
-        className="mt-4"
-        onClick={() => {
-          if (!date) {
-            setDateError("Please choose a date.");
-            return;
-          }
+      {isFullyBooked ? (
+        <Button className={`mt-4 ${LARGE_BUTTON_CLASS}`} disabled>
+          {canVisitDaily(place) ? "✓ Added every day" : "✓ Added"}
+        </Button>
+      ) : !current?.date ? (
+        <Button className={`mt-4 ${LARGE_BUTTON_CLASS}`} onClick={handleOpen}>
+          {bookedDates.length > 0 ? "Add another day" : "Add to itinerary"}
+        </Button>
+      ) : (
+        <div className="mt-4 border-t pt-4">
+          <ScheduleFields
+            trip={trip}
+            value={current}
+            preferredStartTime={preferredStartTime}
+            unavailableDates={unavailableDates}
+            isTimeAvailable={isTimeAvailable}
+            onChange={(value) => {
+              setSchedule(value);
+              setError("");
+            }}
+          />
 
-          setDateError("");
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-          if (!isValidDuration(duration)) {
-            setDurationError("Enter a duration like 1:45.");
-            return;
-          }
+          <div className="mt-4 flex gap-2">
+            <Button onClick={() => handleAdd(current)}>Add</Button>
 
-          setDurationError("");
-          onAdd(date, startTime, duration, travelTime);
-        }}
-      >
-        Add to itinerary
-      </Button>
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

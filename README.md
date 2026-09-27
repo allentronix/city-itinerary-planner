@@ -1,75 +1,58 @@
-# React + TypeScript + Vite
+# ItiPlanner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small web app for planning a city trip day by day. Pick a city and how long you're staying, then build a schedule of places to visit.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Choose a destination:** 10 cities (Budapest, Rome, Paris, London, Barcelona, New York, Tokyo, Istanbul, Prague, Athens), each with curated sights, restaurants and coffee shops, and the best time to visit them.
+- **Set your trip dates:** pick your start and end dates from a calendar (up to 30 days). You can edit the dates later, and any activities that fall outside the new range are removed after you confirm.
+- **Schedule places:** pick a trip day, start time, duration and travel time afterwards. The start time is pre-filled from the place's best time to visit, or the next free slot.
+- **Conflict checks:** start times that would clash are greyed out, and the app stops you from:
+  - adding a sight more than once, or a restaurant or coffee shop more than once on the same day
+  - scheduling activities that overlap
+  - scheduling an activity (plus its travel time) that runs past midnight
+- **Filter places:** show all places, only those not added yet, sights, restaurants, coffee shops, or morning, afternoon or evening spots.
+- **Day-by-day itinerary:** a summary of how many days are planned, then activities grouped by day and sorted by time, with the travel time and free time between stops shown. You can edit or remove any activity (removing asks you to confirm).
 
-## React Compiler
+- **Save trips:** press **Save trip** under your itinerary to keep it in **My trips**. After that, every change saves automatically, and you can start planning another trip without losing it. Leaving a trip you haven't saved asks you to confirm first.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Saved trips are stored in your browser (`localStorage`), so they stay on this device and browser only.
 
-## Expanding the ESLint configuration
+## Tech stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+React 19, TypeScript, Vite, React Router, Tailwind CSS v4 and shadcn/ui.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev      # start the dev server
+npm run build    # type-check and build for production
+npm run preview  # preview the production build
+npm run lint     # run ESLint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project structure
 
 ```
+src/
+  pages/        Home, City and About pages
+  components/   Trip form, place cards, itinerary view, navbar, UI primitives
+  data/         City and place data, shared types
+  utils/        Date and time helpers
+```
+
+## Credits
+
+City banner photos are from [Unsplash](https://unsplash.com) and used under the [Unsplash License](https://unsplash.com/license):
+
+- Budapest: [Ervin Lukacs](https://unsplash.com/@lukerv4)
+- Rome: [David Köhler](https://unsplash.com/@davidkhlr)
+- Paris: [Chris Karidis](https://unsplash.com/@chriskaridis)
+- London: [Jacob Diehl](https://unsplash.com/@jacob_diehl_film)
+- Barcelona: [Colin + Meg](https://unsplash.com/@colinandmeg)
+- New York: [Luca Bravo](https://unsplash.com/@lucabravo)
+- Tokyo: [Louie Martinez](https://unsplash.com/@thetalkinglens)
+- Istanbul: [Ibrahim Uzun](https://unsplash.com/@ibuzn)
+- Prague: [William Zhang](https://unsplash.com/@ceye2eye)
+- Athens: [Constantinos Kollias](https://unsplash.com/@ckollias)

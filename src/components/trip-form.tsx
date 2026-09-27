@@ -1,31 +1,40 @@
-import { useState } from "react";
+import { useId, useState } from "react";
+import DateRangePicker from "./date-range-picker";
 import { Button } from "./ui/button";
+import {
+  MAX_TRIP_DAYS,
+  getEarliestStartDate,
+  getTodayDate,
+  validateTripDates,
+} from "../utils/dates";
 
 interface TripFormProps {
-  cityId: string;
+  cityName: string;
   initialStartDate?: string;
   initialEndDate?: string;
   onCreateTrip: (startDate: string, endDate: string) => void;
+  onCancel?: () => void;
 }
 
 function TripForm({
-  cityId,
+  cityName,
   initialStartDate = "",
   initialEndDate = "",
   onCreateTrip,
+  onCancel,
 }: TripFormProps) {
+  const isEditing = Boolean(initialStartDate);
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
   const [error, setError] = useState("");
 
-  function handleSubmit() {
-    if (!startDate || !endDate) {
-      setError("Please choose both dates.");
-      return;
-    }
+  const id = useId();
 
-    if (endDate < startDate) {
-      setError("End date must be after the start date.");
+  function handleSubmit() {
+    const dateError = validateTripDates(startDate, endDate, initialStartDate);
+
+    if (dateError) {
+      setError(dateError);
       return;
     }
 
@@ -34,44 +43,48 @@ function TripForm({
   }
 
   return (
-    <section className="rounded-lg border p-4">
-      <h2 className="text-xl font-semibold">Plan your trip to {cityId}</h2>
+    <section className="mb-10 border bg-white p-6">
+      <h2 className="font-serif text-2xl tracking-tight">
+        {isEditing ? "Your trip" : `Plan your trip to ${cityName}`}
+      </h2>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium">Start date</label>
+        <label
+          className="block text-xs font-medium tracking-wider text-slate-500 uppercase"
+          htmlFor={`${id}-dates`}
+        >
+          Dates
+        </label>
 
-        <input
-          type="date"
-          value={startDate}
-          min={new Date().toISOString().split("T")[0]}
-          onChange={(event) => {
-            setStartDate(event.target.value);
+        <DateRangePicker
+          id={`${id}-dates`}
+          className="mt-1 w-full max-w-xs border bg-white px-3 py-2"
+          startDate={startDate}
+          endDate={endDate}
+          minDate={getEarliestStartDate(initialStartDate)}
+          minEndDate={getTodayDate()}
+          maxDays={MAX_TRIP_DAYS}
+          onChange={(start, end) => {
+            setStartDate(start);
+            setEndDate(end);
             setError("");
           }}
-          className="mt-1 rounded border p-2"
-        />
-      </div>
-
-      <div className="mt-3">
-        <label className="block text-sm font-medium">End date</label>
-
-        <input
-          type="date"
-          value={endDate}
-          min={new Date().toISOString().split("T")[0]}
-          onChange={(event) => {
-            setEndDate(event.target.value);
-            setError("");
-          }}
-          className="mt-1 rounded border p-2"
         />
       </div>
 
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
-      <Button className="mt-4" onClick={handleSubmit}>
-        {initialStartDate ? "Save changes" : "Create trip"}
-      </Button>
+      <div className="mt-4 flex gap-2">
+        <Button onClick={handleSubmit}>
+          {isEditing ? "Save changes" : "Create trip"}
+        </Button>
+
+        {onCancel && (
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
     </section>
   );
 }

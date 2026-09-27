@@ -1,171 +1,59 @@
-import { useRef, useState } from "react";
-import type { ItineraryItem, Trip } from "../data/types";
-
-function isValidDuration(duration: string): boolean {
-  const match = duration.match(/^(\d+):([0-5]\d)$/);
-
-  if (!match) return false;
-
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-
-  return hours > 0 || minutes > 0;
-}
-function durationToMinutes(duration: string): number {
-  const [hours, minutes] = duration.split(":").map(Number);
-  return hours * 60 + minutes;
-}
-
-function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
-}
-
-function isWithinSameDay(startTime: string, duration: number): boolean {
-  const start = timeToMinutes(startTime);
-  const end = start + duration;
-
-  return end <= 24 * 60;
-}
+import { useState } from "react";
+import type { ItineraryItem, Schedule, Trip } from "../data/types";
+import ScheduleFields from "./schedule-fields";
+import { Button } from "./ui/button";
 
 interface EditItineraryItemProps {
   item: ItineraryItem;
   trip: Trip;
+  isTimeAvailable: (schedule: Schedule) => boolean;
+  unavailableDates: string[];
   onCancel: () => void;
-  onSave: (
-    date: string,
-    startTime: string,
-    duration: number,
-    travelTime: number,
-  ) => string | null;
+  onSave: (schedule: Schedule) => string | null;
 }
 
 function EditItineraryItem({
   item,
   trip,
+  isTimeAvailable,
+  unavailableDates,
   onCancel,
   onSave,
 }: EditItineraryItemProps) {
-  const [error, setError] = useState("");
+  const [schedule, setSchedule] = useState<Schedule>({
+    date: item.date,
+    startTime: item.startTime,
+    duration: item.duration,
+    travelTime: item.travelTime,
+  });
 
-  const dateInputRef = useRef<HTMLInputElement>(null);
-  const timeInputRef = useRef<HTMLInputElement>(null);
-  const durationInputRef = useRef<HTMLInputElement>(null);
-  const travelTimeInputRef = useRef<HTMLSelectElement>(null);
+  const [error, setError] = useState("");
 
   return (
     <div className="mt-3">
-      <div>
-        <label className="block text-sm font-medium">Date</label>
-        <input
-          type="date"
-          ref={dateInputRef}
-          defaultValue={item.date}
-          min={trip.startDate}
-          max={trip.endDate}
-          onChange={() => setError("")}
-          className="mt-1 rounded border p-2"
-        />
-      </div>
-
-      <div className="mt-3">
-        <label className="block text-sm font-medium">Start time</label>
-        <input
-          type="time"
-          ref={timeInputRef}
-          defaultValue={item.startTime}
-          onChange={() => setError("")}
-          className="mt-1 rounded border p-2"
-        />
-      </div>
-
-      <div className="mt-3">
-        <label className="block text-sm font-medium">Duration</label>
-        <input
-          type="text"
-          ref={durationInputRef}
-          defaultValue={`${Math.floor(item.duration / 60)}:${String(
-            item.duration % 60,
-          ).padStart(2, "0")}`}
-          onChange={() => setError("")}
-          className="mt-1 rounded border p-2"
-        />
-      </div>
-
-      <div className="mt-3">
-        <label className="block text-sm font-medium">
-          Travel time to next place
-        </label>
-
-        <select
-          ref={travelTimeInputRef}
-          defaultValue={item.travelTime}
-          onChange={() => setError("")}
-          className="mt-1 rounded border p-2"
-        >
-          <option value={0}>0 minutes</option>
-          <option value={15}>15 minutes</option>
-          <option value={30}>30 minutes</option>
-          <option value={45}>45 minutes</option>
-          <option value={60}>1 hour</option>
-        </select>
-      </div>
+      <ScheduleFields
+        trip={trip}
+        value={schedule}
+        preferredStartTime={item.startTime}
+        unavailableDates={unavailableDates}
+        isTimeAvailable={isTimeAvailable}
+        onChange={(value) => {
+          setSchedule(value);
+          setError("");
+        }}
+      />
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-      <button
-        className="mt-3 rounded border px-3 py-1 text-xs text-gray-500 hover:text-gray-900"
-        onClick={onCancel}
-      >
-        Cancel
-      </button>
+      <div className="mt-3 flex gap-2">
+        <Button size="sm" onClick={() => setError(onSave(schedule) ?? "")}>
+          Save
+        </Button>
 
-      <button
-        className="ml-2 mt-3 cursor-pointer rounded border px-3 py-1 text-xs font-medium"
-        onClick={() => {
-          const date = dateInputRef.current?.value ?? "";
-
-          const startTime = timeInputRef.current?.value ?? "";
-
-          if (!date) {
-            setError("Please choose a date.");
-            return;
-          }
-
-          if (!startTime) {
-            setError("Please choose a start time.");
-            return;
-          }
-
-          const durationValue = durationInputRef.current?.value ?? "0:00";
-
-          if (!isValidDuration(durationValue)) {
-            setError("Please enter a valid duration, such as 1:30 or 2:00.");
-            return;
-          }
-
-          const duration = durationToMinutes(durationValue);
-
-          const travelTime = Number(
-            travelTimeInputRef.current?.value ?? item.travelTime,
-          );
-
-          if (!isWithinSameDay(startTime, duration)) {
-            setError(
-              "This activity would continue into the next day. Please choose an earlier start time or shorter duration.",
-            );
-            return;
-          }
-
-          const errorMessage = onSave(date, startTime, duration, travelTime);
-
-          if (errorMessage) {
-            setError(errorMessage);
-          }
-        }}
-      >
-        Save
-      </button>
+        <Button size="sm" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 }

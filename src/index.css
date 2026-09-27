@@ -55,7 +55,8 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
+    /* Dark slate (Tailwind slate-800), one shade lighter than the header's "Plan a trip" button. */
+    --primary: oklch(0.279 0.041 260.031);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
@@ -127,4 +128,15 @@
   html {
     @apply font-sans;
     }
+  /* Tailwind v4 resets buttons to the default cursor; show a hand on anything clickable. */
+  button,
+  select,
+  [role="button"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
