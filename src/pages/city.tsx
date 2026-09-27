@@ -146,6 +146,8 @@ function City() {
       {(!trip || isEditingTrip) && (
         <TripForm
           cityId={city.id}
+          initialStartDate={trip?.startDate}
+          initialEndDate={trip?.endDate}
           onCreateTrip={(startDate, endDate) => {
             const affectedItems = itinerary.filter(
               (item) => item.date < startDate || item.date > endDate,

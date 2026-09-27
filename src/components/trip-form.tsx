@@ -14,8 +14,8 @@ function TripForm({
   initialEndDate = "",
   onCreateTrip,
 }: TripFormProps) {
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
   const [error, setError] = useState("");
 
   function handleSubmit() {
@@ -70,7 +70,7 @@ function TripForm({
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <Button className="mt-4" onClick={handleSubmit}>
-        Create trip
+        {initialStartDate ? "Save changes" : "Create trip"}
       </Button>
     </section>
   );

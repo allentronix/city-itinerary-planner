@@ -1,6 +1,16 @@
 import { useRef, useState } from "react";
 import type { ItineraryItem, Trip } from "../data/types";
 
+function isValidDuration(duration: string): boolean {
+  const match = duration.match(/^(\d+):([0-5]\d)$/);
+
+  if (!match) return false;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  return hours > 0 || minutes > 0;
+}
 function durationToMinutes(duration: string): number {
   const [hours, minutes] = duration.split(":").map(Number);
   return hours * 60 + minutes;
@@ -53,6 +63,7 @@ function EditItineraryItem({
           defaultValue={item.date}
           min={trip.startDate}
           max={trip.endDate}
+          onChange={() => setError("")}
           className="mt-1 rounded border p-2"
         />
       </div>
@@ -63,6 +74,7 @@ function EditItineraryItem({
           type="time"
           ref={timeInputRef}
           defaultValue={item.startTime}
+          onChange={() => setError("")}
           className="mt-1 rounded border p-2"
         />
       </div>
@@ -75,6 +87,7 @@ function EditItineraryItem({
           defaultValue={`${Math.floor(item.duration / 60)}:${String(
             item.duration % 60,
           ).padStart(2, "0")}`}
+          onChange={() => setError("")}
           className="mt-1 rounded border p-2"
         />
       </div>
@@ -87,6 +100,7 @@ function EditItineraryItem({
         <select
           ref={travelTimeInputRef}
           defaultValue={item.travelTime}
+          onChange={() => setError("")}
           className="mt-1 rounded border p-2"
         >
           <option value={0}>0 minutes</option>
@@ -109,17 +123,35 @@ function EditItineraryItem({
       <button
         className="ml-2 mt-3 cursor-pointer rounded border px-3 py-1 text-xs font-medium"
         onClick={() => {
-          const date = dateInputRef.current?.value ?? item.date;
-          const startTime = timeInputRef.current?.value ?? item.startTime;
-          const duration = durationToMinutes(
-            durationInputRef.current?.value ?? "0:00",
-          );
+          const date = dateInputRef.current?.value ?? "";
+
+          const startTime = timeInputRef.current?.value ?? "";
+
+          if (!date) {
+            setError("Please choose a date.");
+            return;
+          }
+
+          if (!startTime) {
+            setError("Please choose a start time.");
+            return;
+          }
+
+          const durationValue = durationInputRef.current?.value ?? "0:00";
+
+          if (!isValidDuration(durationValue)) {
+            setError("Please enter a valid duration, such as 1:30 or 2:00.");
+            return;
+          }
+
+          const duration = durationToMinutes(durationValue);
+
           const travelTime = Number(
             travelTimeInputRef.current?.value ?? item.travelTime,
           );
 
           if (!isWithinSameDay(startTime, duration)) {
-            alert(
+            setError(
               "This activity would continue into the next day. Please choose an earlier start time or shorter duration.",
             );
             return;
