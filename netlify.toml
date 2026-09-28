@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "dist"
 
+# Vite 8 needs Node 20.19+; pin it so older Netlify site defaults don't break the build.
+[build.environment]
+  NODE_VERSION = "22"
+
 [functions]
   directory = "netlify/functions"
 
