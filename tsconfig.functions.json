@@ -9,6 +9,7 @@
     /* Netlify bundles functions with esbuild */
     "module": "esnext",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -20,5 +21,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["netlify/functions"]
+  "include": ["netlify"]
 }
