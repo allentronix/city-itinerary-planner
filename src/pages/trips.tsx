@@ -1,17 +1,17 @@
 import { Link } from "react-router-dom";
-import cities from "../data/cities";
 import PageBanner from "../components/page-banner";
 import { Button, buttonVariants } from "../components/ui/button";
 import { useSavedTrips } from "../hooks/use-saved-trips";
 import { formatDateRange, getTripDates } from "../utils/dates";
 import {
   deleteSavedTrip,
+  getTripCity,
   isPastTrip,
   type SavedTrip,
 } from "../utils/saved-trips";
 
 function TripCard({ trip }: { trip: SavedTrip }) {
-  const city = cities.find((city) => city.id === trip.cityId);
+  const city = getTripCity(trip);
   const cityName = city?.name ?? "Unknown city";
   const dayCount = getTripDates(trip.startDate, trip.endDate).length;
   const placeCount = trip.items.length;
@@ -24,12 +24,22 @@ function TripCard({ trip }: { trip: SavedTrip }) {
 
   return (
     <div className="flex flex-col border bg-white">
-      {city && (
+      {city?.image ? (
         <img
           src={city.image}
           alt=""
           className="aspect-[16/9] w-full object-cover"
         />
+      ) : (
+        // Cities found through search have no photo yet.
+        <div
+          className="flex aspect-[16/9] w-full items-end bg-linear-to-br from-slate-800 to-slate-600 p-5"
+          aria-hidden="true"
+        >
+          <span className="font-serif text-3xl text-white/90">
+            {city?.name}
+          </span>
+        </div>
       )}
 
       <div className="flex flex-1 flex-col p-5">

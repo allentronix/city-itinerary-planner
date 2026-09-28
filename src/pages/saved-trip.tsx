@@ -1,20 +1,26 @@
+import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import cities from "../data/cities";
 import Planner from "../components/planner";
-import { getSavedTrip, toItinerary } from "../utils/saved-trips";
+import { getSavedTrip, getTripCity, toItinerary } from "../utils/saved-trips";
 import NotFound from "./not-found";
 
 // Opens a saved trip from /trips/:tripId; changes save automatically.
 function SavedTripPage() {
   const { tripId = "" } = useParams();
 
-  const savedTrip = getSavedTrip(tripId);
-  const city = cities.find((city) => city.id === savedTrip?.cityId);
+  // Read once per trip: the planner keeps its own state and saves changes itself.
+  const loaded = useMemo(() => {
+    const savedTrip = getSavedTrip(tripId);
+    const city = savedTrip ? getTripCity(savedTrip) : undefined;
 
-  if (!savedTrip || !city) {
+    return savedTrip && city ? { savedTrip, city } : null;
+  }, [tripId]);
+
+  if (!loaded) {
     return <NotFound title="Trip not found" />;
   }
 
+  const { savedTrip, city } = loaded;
   const { itinerary, missingCount } = toItinerary(savedTrip.items, city);
 
   const notice =

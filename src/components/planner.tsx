@@ -27,7 +27,11 @@ import { formatFullDate, getTripDates } from "../utils/dates";
 
 import { canVisitDaily, getUnavailableDates } from "../utils/places";
 
-import { saveTrip, toSavedItems } from "../utils/saved-trips";
+import { saveTrip, toSavedCity, toSavedItems } from "../utils/saved-trips";
+
+import { PLACE_TYPES, type PlaceType } from "../utils/api";
+
+import { useCityPlaces } from "../hooks/use-city-places";
 
 import { isWithinSameDay, timeToMinutes } from "../utils/time";
 
@@ -43,6 +47,25 @@ const PLACE_FILTERS: { value: PlaceFilter; label: string }[] = [
   { value: "afternoon", label: "Afternoon spots" },
   { value: "evening", label: "Evening spots" },
 ];
+
+// Filters that show only one kind of place, and the kind they need loaded.
+const FILTER_PLACE_TYPES: Partial<Record<PlaceFilter, PlaceType[]>> = {
+  attraction: ["sights"],
+  restaurant: ["restaurants"],
+  cafe: ["cafes"],
+};
+
+const PLACE_TYPE_LABELS: Record<PlaceType, string> = {
+  sights: "sights",
+  restaurants: "restaurants",
+  cafes: "coffee shops",
+};
+
+const PLACE_TYPE_BUTTON_LABELS: Record<PlaceType, string> = {
+  sights: "Sights",
+  restaurants: "Restaurants",
+  cafes: "Coffee shops",
+};
 
 interface PlannerProps {
   city: City;
@@ -69,6 +92,14 @@ function Planner({
 
   const [placeFilter, setPlaceFilter] = useState<PlaceFilter>("all");
 
+  const {
+    places,
+    entries: placeEntries,
+    load: loadPlaces,
+  } = useCityPlaces(city);
+
+  const isApiCity = city.source === "api";
+
   const [saveError, setSaveError] = useState("");
 
   // Set while saving a new trip, so the unsaved-changes warning doesn't fire on the redirect.
@@ -80,7 +111,7 @@ function Planner({
   const lastSavedRef = useRef(
     JSON.stringify({
       trip: initialTrip,
-      items: toSavedItems(initialItinerary),
+      items: toSavedItems(initialItinerary, city),
     }),
   );
 
@@ -90,21 +121,26 @@ function Planner({
       return;
     }
 
-    const items = toSavedItems(itinerary);
+    const items = toSavedItems(itinerary, city);
     const snapshot = JSON.stringify({ trip, items });
 
     if (snapshot === lastSavedRef.current) {
       return;
     }
 
-    const saved = saveTrip({ ...trip, id: savedTripId, items });
+    const saved = saveTrip({
+      ...trip,
+      id: savedTripId,
+      items,
+      city: toSavedCity(city),
+    });
 
     if (saved) {
       lastSavedRef.current = snapshot;
     }
 
     setSaveError(saved ? "" : "Couldn't save your latest changes.");
-  }, [savedTripId, trip, itinerary]);
+  }, [savedTripId, trip, itinerary, city]);
 
   // Warn before leaving the app (refresh, closing the tab) with an unsaved trip.
   useEffect(() => {
@@ -152,7 +188,12 @@ function Planner({
 
     const id = crypto.randomUUID();
 
-    const saved = saveTrip({ ...trip, id, items: toSavedItems(itinerary) });
+    const saved = saveTrip({
+      ...trip,
+      id,
+      items: toSavedItems(itinerary, city),
+      city: toSavedCity(city),
+    });
 
     if (!saved) {
       setSaveError(
@@ -317,7 +358,27 @@ function Planner({
     return null;
   }
 
-  const visiblePlaces = city.places.filter(matchesFilter);
+  const visiblePlaces = places.filter(matchesFilter);
+
+  // Which kinds of place the current filter shows, and where each stands.
+  const filteredTypes: PlaceType[] =
+    FILTER_PLACE_TYPES[placeFilter] ?? PLACE_TYPES;
+  const loadingTypes = filteredTypes.filter(
+    (type) => placeEntries[type]?.status === "loading",
+  );
+  const failedTypes = filteredTypes.filter(
+    (type) => placeEntries[type]?.status === "error",
+  );
+  const notLoadedTypes = isApiCity
+    ? filteredTypes.filter((type) => !placeEntries[type])
+    : [];
+
+  function handleFilterChange(filter: PlaceFilter) {
+    setPlaceFilter(filter);
+
+    // Restaurants and cafés load only when someone asks for them.
+    FILTER_PLACE_TYPES[filter]?.forEach(loadPlaces);
+  }
 
   const tripDayCount = trip
     ? getTripDates(trip.startDate, trip.endDate).length
@@ -419,7 +480,7 @@ function Planner({
                     id="place-filter"
                     value={placeFilter}
                     onChange={(event) =>
-                      setPlaceFilter(event.target.value as PlaceFilter)
+                      handleFilterChange(event.target.value as PlaceFilter)
                     }
                     className="mt-1 border bg-white p-2 text-sm"
                   >
@@ -432,10 +493,46 @@ function Planner({
                 </div>
               </div>
 
-              {visiblePlaces.length === 0 ? (
-                <p className="mt-6 border border-dashed p-4 text-sm text-slate-500">
-                  No places match this filter.
+              {loadingTypes.length > 0 && (
+                <p className="mt-6 text-sm text-slate-500">
+                  Loading{" "}
+                  {loadingTypes
+                    .map((type) => PLACE_TYPE_LABELS[type])
+                    .join(" and ")}
+                  …
                 </p>
+              )}
+
+              {failedTypes.map((type) => {
+                const entry = placeEntries[type];
+
+                return (
+                  <div
+                    key={type}
+                    className="mt-6 flex flex-wrap items-center gap-3 border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+                  >
+                    <p className="flex-1">
+                      Couldn't load {PLACE_TYPE_LABELS[type]}.{" "}
+                      {entry?.status === "error" ? entry.message : ""}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => loadPlaces(type)}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {visiblePlaces.length === 0 ? (
+                loadingTypes.length === 0 &&
+                failedTypes.length === 0 && (
+                  <p className="mt-6 border border-dashed p-4 text-sm text-slate-500">
+                    No places match this filter.
+                  </p>
+                )
               ) : (
                 <div className="mt-6 grid items-start gap-4 sm:grid-cols-2">
                   {visiblePlaces.map((place) => (
@@ -450,6 +547,29 @@ function Planner({
                     />
                   ))}
                 </div>
+              )}
+
+              {notLoadedTypes.length > 0 && (
+                <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
+                  <span className="text-slate-500">Also show:</span>
+                  {notLoadedTypes.map((type) => (
+                    <Button
+                      key={type}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => loadPlaces(type)}
+                    >
+                      {PLACE_TYPE_BUTTON_LABELS[type]}
+                    </Button>
+                  ))}
+                </div>
+              )}
+
+              {isApiCity && (
+                <p className="mt-8 text-xs text-slate-400">
+                  Place data © OpenStreetMap contributors, via Geoapify.
+                  Descriptions from Wikidata.
+                </p>
               )}
             </section>
 

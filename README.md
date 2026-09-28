@@ -4,7 +4,7 @@ A small web app for planning a city trip day by day. Pick a city and how long yo
 
 ## Features
 
-- **Choose a destination:** 10 cities (Budapest, Rome, Paris, London, Barcelona, New York, Tokyo, Istanbul, Prague, Athens), each with curated sights, restaurants and coffee shops, and the best time to visit them.
+- **Choose a destination:** search for any city worldwide. Ten cities (Budapest, Rome, Paris, London, Barcelona, New York, Tokyo, Istanbul, Prague, Athens) are built in with photos and hand-picked sights, restaurants and coffee shops. Other cities load their places from [Geoapify](https://www.geoapify.com) (OpenStreetMap data), with sights ranked by how well known they are on Wikidata.
 - **Set your trip dates:** pick your start and end dates from a calendar (up to 30 days). You can edit the dates later, and any activities that fall outside the new range are removed after you confirm.
 - **Schedule places:** pick a trip day, start time, duration and travel time afterwards. The start time is pre-filled from the place's best time to visit, or the next free slot.
 - **Conflict checks:** start times that would clash are greyed out, and the app stops you from:
@@ -21,6 +21,18 @@ Saved trips are stored in your browser (`localStorage`), so they stay on this de
 ## Tech stack
 
 React 19, TypeScript, Vite, React Router, Tailwind CSS v4 and shadcn/ui.
+
+## Server and API key
+
+City search and places for non-built-in cities come from small Netlify Functions in `netlify/functions`, which keep the Geoapify API key on the server and cache results for everyone.
+
+1. Get a free API key at [geoapify.com](https://myprojects.geoapify.com).
+2. Copy `.env.example` to `.env` and add the key. `.env` is ignored by git.
+3. Run `npm run dev:netlify` and open http://localhost:8888.
+
+Plain `npm run dev` still works, but only with the built-in cities.
+
+When deploying to Netlify, add `GEOAPIFY_API_KEY` under Site settings → Environment variables.
 
 ## Getting started
 

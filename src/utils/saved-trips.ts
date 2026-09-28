@@ -1,20 +1,32 @@
-import type { City, ItineraryItem, Schedule, Trip } from "../data/types";
+import cities from "../data/cities";
+import type {
+  City,
+  CityInfo,
+  ItineraryItem,
+  Place,
+  Schedule,
+  Trip,
+} from "../data/types";
 import { getTodayDate } from "./dates";
 
 const STORAGE_KEY = "itiplanner.trips";
 const STORAGE_VERSION = 1;
 const CHANGE_EVENT = "itiplanner:trips-changed";
 
-// Places are stored by id and looked up from the city data when a trip is opened,
-// so later fixes to place details show up in saved trips too.
+// Built-in places are stored by id and looked up when a trip is opened, so later
+// fixes to their details show up in saved trips too. Places from search cities
+// also keep a copy, so reopening the trip needs no API request.
 export interface SavedItineraryItem extends Schedule {
   id: string;
   placeId: string;
+  place?: Place;
 }
 
 export interface SavedTrip extends Trip {
   id: string;
   items: SavedItineraryItem[];
+  // Only set for cities found through search; built-in cities are looked up by cityId.
+  city?: CityInfo;
   createdAt: string;
   updatedAt: string;
 }
@@ -123,22 +135,49 @@ export function deleteSavedTrip(id: string): boolean {
   return writeTrips(loadTrips().filter((trip) => trip.id !== id));
 }
 
-export function toSavedItems(itinerary: ItineraryItem[]): SavedItineraryItem[] {
+export function toSavedItems(
+  itinerary: ItineraryItem[],
+  city: City,
+): SavedItineraryItem[] {
   return itinerary.map(({ place, ...schedule }) => ({
     ...schedule,
     placeId: place.id,
+    ...(city.source === "api" ? { place } : {}),
   }));
 }
 
-// Rebuilds the itinerary, skipping places that no longer exist in the city data.
+// The city copy saved with a trip; undefined for built-in cities.
+export function toSavedCity(city: City): CityInfo | undefined {
+  if (city.source !== "api") {
+    return undefined;
+  }
+
+  const { id, name, country, lat, lon } = city;
+
+  return { id, name, country, lat, lon };
+}
+
+// The city a saved trip belongs to: a built-in city, or the saved copy of a search city.
+export function getTripCity(trip: SavedTrip): City | undefined {
+  const builtIn = cities.find((city) => city.id === trip.cityId);
+
+  if (builtIn) {
+    return builtIn;
+  }
+
+  return trip.city ? { ...trip.city, places: [], source: "api" } : undefined;
+}
+
+// Rebuilds the itinerary, skipping places that no longer exist.
 export function toItinerary(
   items: SavedItineraryItem[],
   city: City,
 ): { itinerary: ItineraryItem[]; missingCount: number } {
   const itinerary: ItineraryItem[] = [];
 
-  for (const { placeId, ...schedule } of items) {
-    const place = city.places.find((candidate) => candidate.id === placeId);
+  for (const { placeId, place: savedPlace, ...schedule } of items) {
+    const place =
+      city.places.find((candidate) => candidate.id === placeId) ?? savedPlace;
 
     if (place) {
       itinerary.push({ ...schedule, place });

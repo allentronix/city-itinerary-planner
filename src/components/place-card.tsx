@@ -103,6 +103,16 @@ function PlaceCard({
 
       <p className="mt-3 text-sm text-slate-500">Best time: {place.bestTime}</p>
 
+      {place.openingHours && (
+        <p className="mt-1 text-sm text-slate-500">
+          Hours: {place.openingHours}
+        </p>
+      )}
+
+      {place.address && (
+        <p className="mt-1 text-sm text-slate-500">{place.address}</p>
+      )}
+
       {canVisitDaily(place) && bookedDayNumbers.length > 0 && (
         <p className="mt-1 text-sm text-slate-500">
           Planned for Day {bookedDayNumbers.join(", Day ")}

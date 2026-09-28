@@ -1,6 +1,8 @@
 import { useState, type SubmitEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import cities from "../data/cities";
+import type { CityInfo } from "../data/types";
+import CitySearch from "../components/city-search";
 import DateRangePicker from "../components/date-range-picker";
 import { Button } from "../components/ui/button";
 import { MAX_TRIP_DAYS, getTodayDate, validateTripDates } from "../utils/dates";
@@ -8,11 +10,9 @@ import { MAX_TRIP_DAYS, getTodayDate, validateTripDates } from "../utils/dates";
 const LABEL_CLASS =
   "block text-xs font-medium tracking-wider text-slate-800 uppercase";
 
-const FIELD_CLASS = "mt-1 w-full bg-transparent text-slate-600 outline-none";
-
 function Home() {
   const navigate = useNavigate();
-  const [cityId, setCityId] = useState("");
+  const [city, setCity] = useState<CityInfo | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
@@ -22,8 +22,8 @@ function Home() {
   function handleExplore(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!cityId) {
-      setError("Please choose a city.");
+    if (!city) {
+      setError("Please choose a city from the list.");
       return;
     }
 
@@ -36,7 +36,18 @@ function Home() {
 
     const params = new URLSearchParams({ start: startDate, end: endDate });
 
-    navigate(`/city/${cityId}?${params}`);
+    // Cities found through search carry their details in the URL.
+    if (!cities.some((builtIn) => builtIn.id === city.id)) {
+      params.set("name", city.name);
+      params.set("country", city.country);
+
+      if (city.lat !== undefined && city.lon !== undefined) {
+        params.set("lat", String(city.lat));
+        params.set("lon", String(city.lon));
+      }
+    }
+
+    navigate(`/city/${city.id}?${params}`);
   }
 
   return (
@@ -62,22 +73,14 @@ function Home() {
             <label className={LABEL_CLASS} htmlFor="city">
               Where
             </label>
-            <select
+            <CitySearch
               id="city"
-              value={cityId}
-              onChange={(event) => {
-                setCityId(event.target.value);
+              className="mt-1"
+              onSelect={(selected) => {
+                setCity(selected);
                 setError("");
               }}
-              className={FIELD_CLASS}
-            >
-              <option value="">Choose a city</option>
-              {cities.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name}, {city.country}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="flex-1 border-t px-6 py-4 md:border-t-0">

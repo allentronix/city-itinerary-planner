@@ -14,13 +14,22 @@ export interface Place {
   website?: string;
 }
 
-export interface City {
+// The basics of a city: what city search returns and saved trips keep a copy of.
+export interface CityInfo {
   id: string;
   name: string;
   country: string;
-  image: string;
-  photoCredit: string;
+  lat?: number;
+  lon?: number;
+}
+
+export interface City extends CityInfo {
+  image?: string;
+  photoCredit?: string;
+  // Built-in cities ship with their places. Cities found through search
+  // ("api") start empty and load their places from /api/places.
   places: Place[];
+  source?: "api";
 }
 
 export interface Schedule {
