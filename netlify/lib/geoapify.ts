@@ -32,11 +32,25 @@ export function normalizeText(text: string): string {
     .trim();
 }
 
+// Netlify exposes site variables through Netlify.env in functions; process.env
+// covers local development and older runtimes.
+declare const Netlify:
+  { env: { get(name: string): string | undefined } } | undefined;
+
+export function getGeoapifyApiKey(): string | undefined {
+  const fromNetlify =
+    typeof Netlify !== "undefined"
+      ? Netlify.env.get("GEOAPIFY_API_KEY")
+      : undefined;
+
+  return (fromNetlify ?? process.env.GEOAPIFY_API_KEY)?.trim() || undefined;
+}
+
 export async function callGeoapify<T>(
   path: string,
   params: Record<string, string>,
 ): Promise<T> {
-  const apiKey = process.env.GEOAPIFY_API_KEY;
+  const apiKey = getGeoapifyApiKey();
 
   if (!apiKey) {
     throw new Error("GEOAPIFY_API_KEY is not configured.");
