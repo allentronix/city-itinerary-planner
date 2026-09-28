@@ -74,7 +74,9 @@ export async function withCache<T>(
   maxAgeMs: number,
   load: () => Promise<T>,
 ): Promise<T> {
-  const store = getStore(CACHE_STORE);
+  // "strong" makes new values readable right away; the default can lag up to
+  // a minute, letting a second visitor miss the cache and spend credits again.
+  const store = getStore({ name: CACHE_STORE, consistency: "strong" });
   const blobKey = encodeURIComponent(key);
 
   const cached = (await store.get(blobKey, {

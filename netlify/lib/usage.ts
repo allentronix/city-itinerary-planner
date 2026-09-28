@@ -34,7 +34,9 @@ export async function reserveCredits(
   visitorIp: string,
   credits: number,
 ): Promise<void> {
-  const store = getStore(USAGE_STORE);
+  // "strong" makes new values readable right away; the default can lag up to
+  // a minute, letting a second visitor miss the cache and spend credits again.
+  const store = getStore({ name: USAGE_STORE, consistency: "strong" });
   const day = new Date().toISOString().slice(0, 10);
 
   const creditsKey = `credits-${day}`;
