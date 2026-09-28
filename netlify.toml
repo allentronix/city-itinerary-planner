@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+
+# The app calls /api/<name>; Netlify serves functions at /.netlify/functions/<name>.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Single-page app: send every other URL to index.html so refreshing /trips/… or /city/… works.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
