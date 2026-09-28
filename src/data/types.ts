@@ -6,6 +6,12 @@ export interface Place {
   category: PlaceCategory;
   description: string;
   bestTime: string;
+  // Only set for places loaded from the places API.
+  address?: string;
+  lat?: number;
+  lon?: number;
+  openingHours?: string;
+  website?: string;
 }
 
 export interface City {

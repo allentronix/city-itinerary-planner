@@ -7,6 +7,7 @@ import {
   THIRTY_DAYS_MS,
   withCache,
 } from "../lib/geoapify";
+import { reserveCredits } from "../lib/usage";
 
 // GET /api/cities?q=lis
 // Searches the bundled popular cities first (no credits). Only when that finds
@@ -77,11 +78,16 @@ function searchPopularCities(query: string): CityResult[] {
     .map(({ city }) => city);
 }
 
-async function searchGeoapify(query: string): Promise<CityResult[]> {
+async function searchGeoapify(
+  query: string,
+  visitorIp: string,
+): Promise<CityResult[]> {
   return withCache(
     `cities:v${CACHE_VERSION}:${query}`,
     THIRTY_DAYS_MS,
     async () => {
+      await reserveCredits(visitorIp, 1);
+
       const data = await callGeoapify<GeoapifyAutocomplete>(
         "/v1/geocode/autocomplete",
         { text: query, type: "city", limit: "5", format: "json" },
@@ -111,7 +117,10 @@ async function searchGeoapify(query: string): Promise<CityResult[]> {
   );
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export default async function handler(
+  request: Request,
+  context: { ip?: string },
+): Promise<Response> {
   const rawQuery = new URL(request.url).searchParams.get("q") ?? "";
   const query = normalizeText(rawQuery);
 
@@ -133,7 +142,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   try {
-    const remoteMatches = await searchGeoapify(query);
+    const remoteMatches = await searchGeoapify(query, context.ip ?? "unknown");
 
     // Popular cities first; skip Geoapify results for cities we already list.
     const known = new Set(localMatches.map(cityKey));
