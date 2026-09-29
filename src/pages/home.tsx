@@ -284,7 +284,7 @@ function Home() {
                     {destination.name}
                   </span>
                   <span className="block text-sm text-slate-500">
-                    {destination.country} · {destination.places.length} places
+                    {destination.country}
                   </span>
                 </span>
               </button>
