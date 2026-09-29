@@ -266,7 +266,7 @@ function Planner({
 
     clearDraft();
     isSavingRef.current = true;
-    navigate(`/trips/${id}`, { replace: true });
+    navigate(`/trips/${id}/edit`, { replace: true });
   }
 
   function isPlaceAdded(placeId: string): boolean {
@@ -683,14 +683,23 @@ function Planner({
               <Itinerary
                 itinerary={itinerary}
                 trip={trip}
-                isTimeAvailable={isTimeAvailable}
-                getUnavailableDates={getUnavailableDatesFor}
-                onRemove={(itemId) =>
-                  setItinerary((current) =>
-                    current.filter((item) => item.id !== itemId),
-                  )
-                }
-                onEdit={handleEditItem}
+                actions={{
+                  isTimeAvailable,
+                  getUnavailableDates: getUnavailableDatesFor,
+                  onRemove: (itemId) =>
+                    setItinerary((current) =>
+                      current.filter((item) => item.id !== itemId),
+                    ),
+                  onEdit: handleEditItem,
+                  onNoteChange: (itemId, note) =>
+                    setItinerary((current) =>
+                      current.map((item) =>
+                        item.id === itemId
+                          ? { ...item, note: note || undefined }
+                          : item,
+                      ),
+                    ),
+                }}
               />
 
               <div className="mt-8 border-t pt-6">
@@ -704,8 +713,11 @@ function Planner({
                     </p>
 
                     <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
+                      <Link to={`/trips/${savedTripId}`} className="underline">
+                        View trip
+                      </Link>
                       <Link to="/trips" className="underline">
-                        View my trips
+                        My trips
                       </Link>
                       <Link to="/" className="underline">
                         Plan another trip

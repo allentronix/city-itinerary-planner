@@ -44,6 +44,8 @@ export interface Schedule {
 export interface ItineraryItem extends Schedule {
   id: string;
   place: Place;
+  // The traveller's own note, e.g. "Tickets booked, ref ABC123".
+  note?: string;
 }
 
 export interface Trip {

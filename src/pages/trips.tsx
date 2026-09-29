@@ -4,6 +4,7 @@ import ConfirmDialog from "../components/confirm-dialog";
 import DateRangePicker from "../components/date-range-picker";
 import PageBanner from "../components/page-banner";
 import { Button, buttonVariants } from "../components/ui/button";
+import { cn } from "../lib/utils";
 import { useCityPhoto } from "../hooks/use-city-photo";
 import { useSavedTrips } from "../hooks/use-saved-trips";
 import {
@@ -128,7 +129,7 @@ function DuplicateForm({
       return;
     }
 
-    navigate(`/trips/${newId}`);
+    navigate(`/trips/${newId}/edit`);
   }
 
   return (
@@ -241,29 +242,56 @@ function TripCard({ trip }: { trip: SavedTrip }) {
         )}
 
         {!panel && (
-          <div className="mt-auto flex flex-wrap gap-2 pt-5">
+          <div className="mt-auto pt-5">
             {city && (
-              <Link to={`/trips/${trip.id}`} className={buttonVariants()}>
-                Open
-              </Link>
+              <div className="flex gap-2">
+                {/* Open shows the plan read-only; Edit opens the planner. */}
+                <Link
+                  to={`/trips/${trip.id}`}
+                  className={buttonVariants({ className: "flex-1" })}
+                >
+                  Open
+                </Link>
+                <Link
+                  to={`/trips/${trip.id}/edit`}
+                  // cn() resolves the base and outline border classes, as <Button> does.
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "flex-1",
+                  )}
+                >
+                  Edit
+                </Link>
+              </div>
             )}
 
-            <Button variant="outline" onClick={() => setPanel("rename")}>
-              Rename
-            </Button>
-
-            {city && (
-              <Button variant="outline" onClick={() => setPanel("duplicate")}>
-                Duplicate
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPanel("rename")}
+              >
+                Rename
               </Button>
-            )}
 
-            <Button
-              variant="outline"
-              onClick={() => setIsConfirmingDelete(true)}
-            >
-              Delete
-            </Button>
+              {city && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPanel("duplicate")}
+                >
+                  Duplicate
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsConfirmingDelete(true)}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         )}
       </div>

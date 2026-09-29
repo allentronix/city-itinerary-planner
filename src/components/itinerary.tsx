@@ -17,17 +17,26 @@ const DayMap = lazy(() => import("./day-map"));
 
 import ConfirmDialog from "./confirm-dialog";
 
+import NoteEditor from "./note-editor";
+
 import EditItineraryItem from "./edit-itinerary-item";
 
 import { Button } from "./ui/button";
 
-interface ItineraryProps {
-  itinerary: ItineraryItem[];
-  trip: Trip;
+export interface ItineraryActions {
   isTimeAvailable: (schedule: Schedule, excludeItemId: string) => boolean;
   getUnavailableDates: (place: Place, excludeItemId: string) => string[];
   onRemove: (itemId: string) => void;
   onEdit: (item: ItineraryItem, schedule: Schedule) => string | null;
+  // An empty note removes it.
+  onNoteChange: (itemId: string, note: string) => void;
+}
+
+interface ItineraryProps {
+  itinerary: ItineraryItem[];
+  trip: Trip;
+  // Without actions the itinerary is read-only: no Edit, note or Remove buttons.
+  actions?: ItineraryActions;
 }
 
 // A planned day is shown in full; a run of empty days is collapsed into one line.
@@ -94,20 +103,16 @@ function EmptyDays({
   );
 }
 
-function Itinerary({
-  itinerary,
-  trip,
-  isTimeAvailable,
-  getUnavailableDates,
-  onRemove,
-  onEdit,
-}: ItineraryProps) {
+function Itinerary({ itinerary, trip, actions }: ItineraryProps) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   // Days whose map is open.
   const [mapDates, setMapDates] = useState<string[]>([]);
 
   // The activity waiting for the "Remove" confirmation, if any.
+  // The activity whose note is being written, if any.
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+
   const [pendingRemoval, setPendingRemoval] = useState<ItineraryItem | null>(
     null,
   );
@@ -164,35 +169,73 @@ function Itinerary({
                 Best time: {item.place.bestTime}
               </p>
 
-              <div className="mt-3 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setEditingItemId(item.id)}
-                >
-                  Edit
-                </Button>
+              {item.note && editingNoteId !== item.id && (
+                <p className="mt-3 border-l-2 border-amber-400 bg-amber-50 px-3 py-2 text-sm whitespace-pre-line text-slate-700">
+                  <span className="sr-only">Note: </span>
+                  {item.note}
+                </p>
+              )}
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPendingRemoval(item)}
-                >
-                  Remove
-                </Button>
-              </div>
+              {actions && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditingItemId(item.id)}
+                  >
+                    Edit
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setEditingNoteId(
+                        editingNoteId === item.id ? null : item.id,
+                      )
+                    }
+                  >
+                    {item.note ? "Edit note" : "Add note"}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPendingRemoval(item)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
-          {editingItemId === item.id && (
+          {actions && editingNoteId === item.id && (
+            <NoteEditor
+              placeName={item.place.name}
+              initialNote={item.note}
+              onCancel={() => setEditingNoteId(null)}
+              onSave={(note) => {
+                actions.onNoteChange(item.id, note);
+                setEditingNoteId(null);
+              }}
+            />
+          )}
+
+          {actions && editingItemId === item.id && (
             <EditItineraryItem
               item={item}
               trip={trip}
-              isTimeAvailable={(schedule) => isTimeAvailable(schedule, item.id)}
-              unavailableDates={getUnavailableDates(item.place, item.id)}
+              isTimeAvailable={(schedule) =>
+                actions.isTimeAvailable(schedule, item.id)
+              }
+              unavailableDates={actions.getUnavailableDates(
+                item.place,
+                item.id,
+              )}
               onCancel={() => setEditingItemId(null)}
               onSave={(schedule) => {
-                const errorMessage = onEdit(item, schedule);
+                const errorMessage = actions.onEdit(item, schedule);
 
                 if (!errorMessage) {
                   setEditingItemId(null);
@@ -300,32 +343,34 @@ function Itinerary({
         ),
       )}
 
-      <ConfirmDialog
-        open={pendingRemoval !== null}
-        title="Remove this activity?"
-        confirmLabel="Remove"
-        destructive
-        onConfirm={() => {
-          if (pendingRemoval) {
-            onRemove(pendingRemoval.id);
-          }
+      {actions && (
+        <ConfirmDialog
+          open={pendingRemoval !== null}
+          title="Remove this activity?"
+          confirmLabel="Remove"
+          destructive
+          onConfirm={() => {
+            if (pendingRemoval) {
+              actions.onRemove(pendingRemoval.id);
+            }
 
-          setPendingRemoval(null);
-        }}
-        onCancel={() => setPendingRemoval(null)}
-      >
-        {pendingRemoval && (
-          <p>
-            <strong className="font-medium text-slate-900">
-              {pendingRemoval.place.name}
-            </strong>{" "}
-            at {pendingRemoval.startTime} on Day{" "}
-            {tripDates.indexOf(pendingRemoval.date) + 1} (
-            {formatShortDate(pendingRemoval.date)}) will be removed from your
-            itinerary. You can add it again from Places to visit.
-          </p>
-        )}
-      </ConfirmDialog>
+            setPendingRemoval(null);
+          }}
+          onCancel={() => setPendingRemoval(null)}
+        >
+          {pendingRemoval && (
+            <p>
+              <strong className="font-medium text-slate-900">
+                {pendingRemoval.place.name}
+              </strong>{" "}
+              at {pendingRemoval.startTime} on Day{" "}
+              {tripDates.indexOf(pendingRemoval.date) + 1} (
+              {formatShortDate(pendingRemoval.date)}) will be removed from your
+              itinerary. You can add it again from Places to visit.
+            </p>
+          )}
+        </ConfirmDialog>
+      )}
     </section>
   );
 }

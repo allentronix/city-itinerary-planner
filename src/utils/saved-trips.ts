@@ -20,6 +20,7 @@ export interface SavedItineraryItem extends Schedule {
   id: string;
   placeId: string;
   place?: Place;
+  note?: string;
 }
 
 export interface SavedTrip extends Trip {
