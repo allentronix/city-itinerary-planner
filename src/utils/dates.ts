@@ -131,3 +131,19 @@ export function formatDateRange(startDate: string, endDate: string): string {
 
   return `${startText} – ${endText}`;
 }
+
+// Moves a date by a number of days, e.g. shiftDate("2026-10-30", 3) is "2026-11-02".
+export function shiftDate(date: string, days: number): string {
+  const shifted = new Date(`${date}T00:00:00`);
+  shifted.setDate(shifted.getDate() + days);
+
+  return formatDateValue(shifted);
+}
+
+// Whole days from one date to another (negative if `to` is earlier).
+export function daysBetween(from: string, to: string): number {
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+
+  return Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+}

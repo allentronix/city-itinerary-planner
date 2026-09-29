@@ -44,6 +44,7 @@ function SavedTripPage() {
       initialItinerary={itinerary}
       savedTripId={savedTrip.id}
       notice={notice}
+      tripName={savedTrip.name}
     />
   );
 }

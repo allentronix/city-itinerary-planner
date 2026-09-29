@@ -7,7 +7,7 @@ import type {
   Schedule,
   Trip,
 } from "../data/types";
-import { getTodayDate } from "./dates";
+import { daysBetween, getTodayDate, shiftDate } from "./dates";
 
 const STORAGE_KEY = "itiplanner.trips";
 const STORAGE_VERSION = 1;
@@ -24,6 +24,8 @@ export interface SavedItineraryItem extends Schedule {
 
 export interface SavedTrip extends Trip {
   id: string;
+  // Optional name, e.g. "Rome with Mum"; otherwise the city name is shown.
+  name?: string;
   items: SavedItineraryItem[];
   // Only set for cities found through search; built-in cities are looked up by cityId.
   city?: CityInfo;
@@ -110,7 +112,8 @@ export function getSavedTrip(id: string): SavedTrip | undefined {
   return loadTrips().find((trip) => trip.id === id);
 }
 
-// Creates the trip or replaces the saved copy with the same id.
+// Creates the trip or updates the saved copy with the same id. Fields not
+// passed in (like a trip's name) are kept.
 export function saveTrip(
   trip: Omit<SavedTrip, "createdAt" | "updatedAt">,
 ): boolean {
@@ -119,6 +122,7 @@ export function saveTrip(
   const now = new Date().toISOString();
 
   const savedTrip: SavedTrip = {
+    ...existing,
     ...trip,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -133,6 +137,66 @@ export function saveTrip(
 
 export function deleteSavedTrip(id: string): boolean {
   return writeTrips(loadTrips().filter((trip) => trip.id !== id));
+}
+
+// An empty name removes it, so the city name shows again.
+export function renameSavedTrip(id: string, name: string): boolean {
+  const trimmed = name.trim();
+
+  return writeTrips(
+    loadTrips().map((trip) =>
+      trip.id === id
+        ? {
+            ...trip,
+            name: trimmed || undefined,
+            updatedAt: new Date().toISOString(),
+          }
+        : trip,
+    ),
+  );
+}
+
+export function getTripDisplayName(trip: SavedTrip, city?: City): string {
+  return trip.name || city?.name || "Trip";
+}
+
+// Activities keep their day of the trip: day 2 of the old dates becomes day 2
+// of the new ones. Those that fall past the new end date are left out.
+export function planDuplicate(
+  trip: SavedTrip,
+  startDate: string,
+  endDate: string,
+): { items: SavedItineraryItem[]; droppedCount: number } {
+  const offset = daysBetween(trip.startDate, startDate);
+
+  const items = trip.items
+    .map((item) => ({ ...item, date: shiftDate(item.date, offset) }))
+    .filter((item) => item.date >= startDate && item.date <= endDate);
+
+  return { items, droppedCount: trip.items.length - items.length };
+}
+
+// Saves a copy of the trip on new dates and returns its id, or null if saving failed.
+export function duplicateSavedTrip(
+  trip: SavedTrip,
+  startDate: string,
+  endDate: string,
+  name: string,
+): string | null {
+  const id = crypto.randomUUID();
+  const { items } = planDuplicate(trip, startDate, endDate);
+
+  const saved = saveTrip({
+    id,
+    cityId: trip.cityId,
+    city: trip.city,
+    name,
+    startDate,
+    endDate,
+    items: items.map((item) => ({ ...item, id: crypto.randomUUID() })),
+  });
+
+  return saved ? id : null;
 }
 
 export function toSavedItems(

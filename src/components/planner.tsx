@@ -95,6 +95,8 @@ interface PlannerProps {
   initialItinerary?: ItineraryItem[];
   savedTripId?: string;
   notice?: string;
+  // A saved trip's own name, e.g. "Rome with Mum".
+  tripName?: string;
 }
 
 function Planner({
@@ -103,6 +105,7 @@ function Planner({
   initialItinerary = [],
   savedTripId,
   notice,
+  tripName,
 }: PlannerProps) {
   const navigate = useNavigate();
 
@@ -445,8 +448,12 @@ function Planner({
   return (
     <>
       <PageBanner
-        eyebrow={city.country}
-        title={city.name}
+        eyebrow={
+          tripName
+            ? [city.name, city.country].filter(Boolean).join(", ")
+            : city.country
+        }
+        title={tripName || city.name}
         image={photo?.url}
         photoCredit={photo?.credit}
       >

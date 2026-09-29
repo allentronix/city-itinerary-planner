@@ -10,6 +10,8 @@ const SEARCH_DELAY_MS = 250;
 interface CitySearchProps {
   id: string;
   className?: string;
+  // Shown in the box when it first appears, e.g. after choosing a destination card.
+  initialCity?: CityInfo | null;
   onSelect: (city: CityInfo | null) => void;
 }
 
@@ -41,10 +43,17 @@ function matchBuiltInCities(query: string): CityInfo[] {
   return cities.filter((city) => normalize(city.name).startsWith(text));
 }
 
-function CitySearch({ id, className = "", onSelect }: CitySearchProps) {
+function CitySearch({
+  id,
+  className = "",
+  initialCity = null,
+  onSelect,
+}: CitySearchProps) {
   const listId = useId();
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() =>
+    initialCity ? formatCity(initialCity) : "",
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [remote, setRemote] = useState<{
