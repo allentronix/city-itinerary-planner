@@ -11,6 +11,7 @@ A small web app for planning a city trip day by day. Pick a city and how long yo
   - adding a sight more than once, or a restaurant or coffee shop more than once on the same day
   - scheduling activities that overlap
   - scheduling an activity (plus its travel time) that runs past midnight
+- **Things to do:** tours, walks, markets, shows, classes and more from [Wikivoyage](https://www.wikivoyage.org)'s "Do" listings, for built-in and searched cities alike.
 - **Filter places:** show all places, only those not added yet, sights, restaurants, coffee shops, or morning, afternoon or evening spots.
 - **Day-by-day itinerary:** a summary of how many days are planned, then activities grouped by day and sorted by time, with the travel time and free time between stops shown. You can edit or remove any activity (removing asks you to confirm).
 
@@ -58,7 +59,7 @@ src/
 
 ## Credits
 
-Photos for cities found through search come from [Wikimedia Commons](https://commons.wikimedia.org), credited on each page. Maps use [Leaflet](https://leafletjs.com) and [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles; sight rankings use [Wikipedia](https://www.wikipedia.org) and [Wikidata](https://www.wikidata.org).
+Photos for cities found through search come from [Wikimedia Commons](https://commons.wikimedia.org), credited on each page. Maps use [Leaflet](https://leafletjs.com) and [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles; sight rankings use [Wikipedia](https://www.wikipedia.org) and [Wikidata](https://www.wikidata.org). "Things to do" come from [Wikivoyage](https://www.wikivoyage.org), available under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
 Built-in city banner photos are from [Unsplash](https://unsplash.com) and used under the [Unsplash License](https://unsplash.com/license):
 

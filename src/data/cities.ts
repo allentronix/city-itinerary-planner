@@ -7,6 +7,7 @@ const cities: City[] = [
     country: "Hungary",
     image: "/cities/budapest.webp",
     photoCredit: "Ervin Lukacs",
+    wikidataId: "Q1781",
     places: [
       {
         id: "parliament",
@@ -95,6 +96,7 @@ const cities: City[] = [
     country: "Italy",
     image: "/cities/rome.webp",
     photoCredit: "David K\u00f6hler",
+    wikidataId: "Q220",
     places: [
       {
         id: "colosseum",
@@ -183,6 +185,7 @@ const cities: City[] = [
     country: "France",
     image: "/cities/paris.webp",
     photoCredit: "Chris Karidis",
+    wikidataId: "Q90",
     places: [
       {
         id: "eiffel-tower",
@@ -272,6 +275,7 @@ const cities: City[] = [
     country: "United Kingdom",
     image: "/cities/london.webp",
     photoCredit: "Jacob Diehl",
+    wikidataId: "Q84",
     places: [
       {
         id: "tower-of-london",
@@ -361,6 +365,7 @@ const cities: City[] = [
     country: "Spain",
     image: "/cities/barcelona.webp",
     photoCredit: "Colin + Meg",
+    wikidataId: "Q1492",
     places: [
       {
         id: "sagrada-familia",
@@ -450,6 +455,7 @@ const cities: City[] = [
     country: "United States",
     image: "/cities/new-york.webp",
     photoCredit: "Luca Bravo",
+    wikidataId: "Q60",
     places: [
       {
         id: "statue-of-liberty",
@@ -539,6 +545,7 @@ const cities: City[] = [
     country: "Japan",
     image: "/cities/tokyo.webp",
     photoCredit: "Louie Martinez",
+    wikidataId: "Q1490",
     places: [
       {
         id: "senso-ji",
@@ -625,6 +632,7 @@ const cities: City[] = [
     country: "Turkey",
     image: "/cities/istanbul.webp",
     photoCredit: "Ibrahim Uzun",
+    wikidataId: "Q406",
     places: [
       {
         id: "hagia-sophia",
@@ -714,6 +722,7 @@ const cities: City[] = [
     country: "Czech Republic",
     image: "/cities/prague.webp",
     photoCredit: "William Zhang",
+    wikidataId: "Q1085",
     places: [
       {
         id: "prague-castle",
@@ -803,6 +812,7 @@ const cities: City[] = [
     country: "Greece",
     image: "/cities/athens.webp",
     photoCredit: "Constantinos Kollias",
+    wikidataId: "Q1524",
     places: [
       {
         id: "acropolis",

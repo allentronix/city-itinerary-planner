@@ -1,8 +1,8 @@
 import type { Place } from "../data/types";
 
-// Restaurants and cafés can be visited once per day; sights once per trip.
+// Restaurants and cafés can be visited once per day; sights and things to do once per trip.
 export function canVisitDaily(place: Place): boolean {
-  return place.category !== "attraction";
+  return place.category === "restaurant" || place.category === "cafe";
 }
 
 // The trip days this place can't be scheduled on, given the days it's already booked.

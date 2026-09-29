@@ -10,6 +10,8 @@ import {
 import { reserveCredits, UsageLimitError } from "../lib/usage";
 import { getWikidataInfo, type WikidataInfo } from "../lib/wikidata";
 import { findFamousSights } from "../lib/famous-sights";
+import { getCityWikidataId, isWikidataId } from "../lib/city-wikidata";
+import { getActivities, type Activity } from "../lib/wikivoyage";
 
 // GET /api/places?city=<Geoapify place id>&type=sights|restaurants|cafes[&lat=&lon=]
 // Returns about 20 places for one city and type. Each city and type is fetched
@@ -304,6 +306,111 @@ function parseCenter(
   return isValid ? { lat, lon } : null;
 }
 
+// --- Things to do (Wikivoyage) ---------------------------------------------
+
+const ACTIVITIES_CACHE_VERSION = 2;
+
+// Listings with a description come first, then those with a location (for
+// maps and walking times), then those with hours.
+function activityScore(activity: Activity): number {
+  return (
+    (activity.description ? 2 : 0) +
+    (activity.lat !== undefined && activity.lon !== undefined ? 1 : 0) +
+    (activity.hours ? 0.5 : 0)
+  );
+}
+
+// "Ramen Cooking Tokyo" -> "ramen-cooking-tokyo"
+function slugify(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+async function loadActivities(wikidataId: string): Promise<Place[]> {
+  const seenNames = new Set<string>();
+  const usedIds = new Set<string>();
+
+  return (await getActivities(wikidataId))
+    .map((activity, order) => ({ activity, order }))
+    .sort(
+      (a, b) =>
+        activityScore(b.activity) - activityScore(a.activity) ||
+        a.order - b.order,
+    )
+    .map(({ activity }) => activity)
+    .filter((activity) => {
+      const key = activity.name.toLowerCase();
+
+      if (seenNames.has(key)) {
+        return false;
+      }
+
+      seenNames.add(key);
+
+      return true;
+    })
+    .slice(0, RESULTS_PER_TYPE)
+    .map((activity) => {
+      let id = `wikivoyage-${slugify(activity.name) || "activity"}`;
+
+      while (usedIds.has(id)) {
+        id += "-2";
+      }
+
+      usedIds.add(id);
+
+      return {
+        id,
+        name: capitalize(activity.name),
+        category: "activity",
+        description: truncate(
+          activity.description || "Activity",
+          MAX_DESCRIPTION_LENGTH,
+        ),
+        bestTime: "Afternoon",
+        address: activity.address,
+        lat: activity.lat,
+        lon: activity.lon,
+        openingHours: activity.hours,
+        website: activity.website,
+      };
+    });
+}
+
+// GET /api/places?type=activities&wikidata=Q220  (built-in cities: no credits)
+// GET /api/places?type=activities&city=<Geoapify place id>  (about 1 credit, once)
+async function handleActivities(
+  searchParams: URLSearchParams,
+  visitorIp: string,
+): Promise<Response> {
+  const cityId = searchParams.get("city") ?? "";
+  let wikidataId = searchParams.get("wikidata");
+
+  if (!isWikidataId(wikidataId)) {
+    if (!/^[0-9a-f]{10,200}$/i.test(cityId)) {
+      return errorResponse("Missing or invalid city.", 400);
+    }
+
+    wikidataId = await getCityWikidataId(cityId, visitorIp);
+  }
+
+  if (!wikidataId) {
+    return jsonResponse({ places: [] });
+  }
+
+  const places = await withCache(
+    `activities:v${ACTIVITIES_CACHE_VERSION}:${wikidataId}`,
+    THIRTY_DAYS_MS,
+    () => loadActivities(wikidataId as string),
+  );
+
+  return jsonResponse({ places });
+}
+
 export default async function handler(
   request: Request,
   context: { ip?: string },
@@ -311,13 +418,34 @@ export default async function handler(
   const { searchParams } = new URL(request.url);
   const cityId = searchParams.get("city") ?? "";
   const type = searchParams.get("type") ?? "";
+  const visitorIp = context.ip ?? "unknown";
+
+  if (type !== "activities" && !(type in PLACE_TYPES)) {
+    return errorResponse(
+      "Type must be sights, restaurants, cafes or activities.",
+      400,
+    );
+  }
+
+  if (type === "activities") {
+    try {
+      return await handleActivities(searchParams, visitorIp);
+    } catch (error) {
+      if (error instanceof UsageLimitError) {
+        return errorResponse(error.message, 429);
+      }
+
+      console.error("Activities lookup failed:", error);
+
+      return errorResponse(
+        "Couldn't load things to do right now. Please try again.",
+        502,
+      );
+    }
+  }
 
   if (!/^[0-9a-f]{10,200}$/i.test(cityId)) {
     return errorResponse("Missing or invalid city.", 400);
-  }
-
-  if (!(type in PLACE_TYPES)) {
-    return errorResponse("Type must be sights, restaurants or cafes.", 400);
   }
 
   const placeType = type as PlaceType;
@@ -327,7 +455,7 @@ export default async function handler(
     const places = await withCache(
       `places:v${CACHE_VERSION}:${cityId}:${placeType}`,
       THIRTY_DAYS_MS,
-      () => loadPlaces(cityId, placeType, center, context.ip ?? "unknown"),
+      () => loadPlaces(cityId, placeType, center, visitorIp),
     );
 
     return jsonResponse({ places });

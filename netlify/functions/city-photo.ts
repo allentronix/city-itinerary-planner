@@ -1,43 +1,24 @@
+import { getCityWikidataId } from "../lib/city-wikidata";
 import { getCityPhoto, type CityPhoto } from "../lib/commons";
 import {
-  callGeoapify,
   errorResponse,
   jsonResponse,
   THIRTY_DAYS_MS,
   withCache,
 } from "../lib/geoapify";
-import { reserveCredits, UsageLimitError } from "../lib/usage";
+import { UsageLimitError } from "../lib/usage";
 
 // GET /api/city-photo?city=<Geoapify place id>
-// Returns { photo: { url, credit } } or { photo: null }. Costs about one
-// Geoapify credit per city (to find its Wikidata entry), once, then cached.
+// Returns { photo: { url, credit } } or { photo: null }. Finding the city's
+// Wikidata entry costs about one Geoapify credit, once, then everything is cached.
 
 const CACHE_VERSION = 1;
-
-interface GeoapifyPlaceDetails {
-  features?: {
-    properties: {
-      wiki_and_media?: { wikidata?: string };
-      datasource?: { raw?: { wikidata?: string } };
-    };
-  }[];
-}
 
 async function loadPhoto(
   cityId: string,
   visitorIp: string,
 ): Promise<CityPhoto | null> {
-  await reserveCredits(visitorIp, 1);
-
-  const details = await callGeoapify<GeoapifyPlaceDetails>(
-    "/v2/place-details",
-    { id: cityId, features: "details" },
-  );
-
-  const properties = details.features?.[0]?.properties;
-  const wikidataId =
-    properties?.wiki_and_media?.wikidata ??
-    properties?.datasource?.raw?.wikidata;
+  const wikidataId = await getCityWikidataId(cityId, visitorIp);
 
   return wikidataId ? getCityPhoto(wikidataId) : null;
 }

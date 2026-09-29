@@ -1,4 +1,4 @@
-export type PlaceCategory = "attraction" | "restaurant" | "cafe";
+export type PlaceCategory = "attraction" | "restaurant" | "cafe" | "activity";
 
 export interface Place {
   id: string;
@@ -30,6 +30,8 @@ export interface City extends CityInfo {
   // ("api") start empty and load their places from /api/places.
   places: Place[];
   source?: "api";
+  // Lets built-in cities load "Things to do" without a Geoapify lookup.
+  wikidataId?: string;
 }
 
 export interface Schedule {

@@ -2,9 +2,14 @@ import type { CityInfo, Place } from "../data/types";
 
 // Talks to the Netlify functions in /netlify/functions (served at /api/*).
 
-export type PlaceType = "sights" | "restaurants" | "cafes";
+export type PlaceType = "sights" | "restaurants" | "cafes" | "activities";
 
-export const PLACE_TYPES: PlaceType[] = ["sights", "restaurants", "cafes"];
+export const PLACE_TYPES: PlaceType[] = [
+  "sights",
+  "restaurants",
+  "cafes",
+  "activities",
+];
 
 export type PlacesEntry =
   | { status: "loading" }
@@ -105,7 +110,10 @@ export function getPlacesEntry(
 
 // Starts loading places unless they're loaded or already loading.
 // Failed loads are retried when requested again.
-export function requestPlaces(city: CityInfo, type: PlaceType) {
+export function requestPlaces(
+  city: CityInfo & { wikidataId?: string },
+  type: PlaceType,
+) {
   const key = entryKey(city.id, type);
   const existing = entries.get(key);
 
@@ -125,6 +133,11 @@ export function requestPlaces(city: CityInfo, type: PlaceType) {
   notify();
 
   const params = new URLSearchParams({ city: city.id, type });
+
+  // Built-in cities know their Wikidata id, so "Things to do" needs no Geoapify lookup.
+  if (type === "activities" && city.wikidataId) {
+    params.set("wikidata", city.wikidataId);
+  }
 
   if (city.lat !== undefined && city.lon !== undefined) {
     params.set("lat", String(city.lat));

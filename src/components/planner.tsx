@@ -67,6 +67,7 @@ const PLACE_FILTERS: { value: PlaceFilter; label: string }[] = [
   { value: "attraction", label: "Sights" },
   { value: "restaurant", label: "Restaurants" },
   { value: "cafe", label: "Coffee shops" },
+  { value: "activity", label: "Things to do" },
   { value: "morning", label: "Morning spots" },
   { value: "afternoon", label: "Afternoon spots" },
   { value: "evening", label: "Evening spots" },
@@ -77,18 +78,21 @@ const FILTER_PLACE_TYPES: Partial<Record<PlaceFilter, PlaceType[]>> = {
   attraction: ["sights"],
   restaurant: ["restaurants"],
   cafe: ["cafes"],
+  activity: ["activities"],
 };
 
 const PLACE_TYPE_LABELS: Record<PlaceType, string> = {
   sights: "sights",
   restaurants: "restaurants",
   cafes: "coffee shops",
+  activities: "things to do",
 };
 
 const PLACE_TYPE_BUTTON_LABELS: Record<PlaceType, string> = {
   sights: "Sights",
   restaurants: "Restaurants",
   cafes: "Coffee shops",
+  activities: "Things to do",
 };
 
 interface PlannerProps {
@@ -316,7 +320,8 @@ function Planner({
     if (
       placeFilter === "attraction" ||
       placeFilter === "restaurant" ||
-      placeFilter === "cafe"
+      placeFilter === "cafe" ||
+      placeFilter === "activity"
     ) {
       return place.category === placeFilter;
     }
@@ -446,9 +451,10 @@ function Planner({
   const failedTypes = filteredTypes.filter(
     (type) => placeEntries[type]?.status === "error",
   );
-  const notLoadedTypes = isApiCity
-    ? filteredTypes.filter((type) => !placeEntries[type])
-    : [];
+  // Kinds of place not loaded yet (built-in cities have all but "Things to do").
+  const notLoadedTypes = filteredTypes.filter((type) => !placeEntries[type]);
+
+  const showsActivities = places.some((place) => place.category === "activity");
 
   function handleFilterChange(filter: PlaceFilter) {
     setPlaceFilter(filter);
@@ -520,27 +526,47 @@ function Planner({
                   Places to visit
                 </h2>
 
-                <div>
-                  <label
-                    className="block text-xs font-medium tracking-wider text-slate-500 uppercase"
-                    htmlFor="place-filter"
-                  >
-                    Show
-                  </label>
-                  <select
-                    id="place-filter"
-                    value={placeFilter}
-                    onChange={(event) =>
-                      handleFilterChange(event.target.value as PlaceFilter)
+                <div className="flex items-end gap-2">
+                  {/* A shortcut to the "Things to do" filter; press again for all places. */}
+                  <Button
+                    variant="outline"
+                    aria-pressed={placeFilter === "activity"}
+                    onClick={() =>
+                      handleFilterChange(
+                        placeFilter === "activity" ? "all" : "activity",
+                      )
                     }
-                    className="mt-1 border bg-white p-2 text-sm"
+                    className={`h-auto px-4 py-2 ${
+                      placeFilter === "activity"
+                        ? "border-slate-900 bg-slate-900 text-white hover:bg-slate-800 hover:text-white"
+                        : ""
+                    }`}
                   >
-                    {PLACE_FILTERS.map((filter) => (
-                      <option key={filter.value} value={filter.value}>
-                        {filter.label}
-                      </option>
-                    ))}
-                  </select>
+                    Things to do
+                  </Button>
+
+                  <div>
+                    <label
+                      className="block text-xs font-medium tracking-wider text-slate-500 uppercase"
+                      htmlFor="place-filter"
+                    >
+                      Show
+                    </label>
+                    <select
+                      id="place-filter"
+                      value={placeFilter}
+                      onChange={(event) =>
+                        handleFilterChange(event.target.value as PlaceFilter)
+                      }
+                      className="mt-1 border bg-white p-2 text-sm"
+                    >
+                      {PLACE_FILTERS.map((filter) => (
+                        <option key={filter.value} value={filter.value}>
+                          {filter.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -623,6 +649,32 @@ function Planner({
                 <p className="mt-8 text-xs text-slate-400">
                   Place data © OpenStreetMap contributors, via Geoapify.
                   Descriptions from Wikidata.
+                </p>
+              )}
+
+              {showsActivities && (
+                <p
+                  className={`text-xs text-slate-400 ${isApiCity ? "mt-1" : "mt-8"}`}
+                >
+                  Things to do from{" "}
+                  <a
+                    href="https://www.wikivoyage.org"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    Wikivoyage
+                  </a>
+                  , available under{" "}
+                  <a
+                    href="https://creativecommons.org/licenses/by-sa/4.0/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline"
+                  >
+                    CC BY-SA 4.0
+                  </a>
+                  .
                 </p>
               )}
             </section>

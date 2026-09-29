@@ -16,6 +16,7 @@ const CATEGORY_LABELS: Record<PlaceCategory, string> = {
   attraction: "Sight",
   restaurant: "Restaurant",
   cafe: "Coffee shop",
+  activity: "Thing to do",
 };
 
 interface PlaceCardProps {

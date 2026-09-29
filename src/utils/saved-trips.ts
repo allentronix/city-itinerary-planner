@@ -206,7 +206,12 @@ export function toSavedItems(
   return itinerary.map(({ place, ...schedule }) => ({
     ...schedule,
     placeId: place.id,
-    ...(city.source === "api" ? { place } : {}),
+    // Built-in places are looked up by id; anything else (search cities,
+    // things to do) keeps a copy so the trip reopens without the network.
+    ...(city.source === "api" ||
+    !city.places.some((builtIn) => builtIn.id === place.id)
+      ? { place }
+      : {}),
   }));
 }
 
