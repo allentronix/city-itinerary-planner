@@ -16,8 +16,40 @@ interface DateRangePickerProps {
   minEndDate?: string;
   maxDays: number;
   className?: string;
+  // Smaller cells and spacing, for tight spots like the landing page.
+  compact?: boolean;
   onChange: (startDate: string, endDate: string) => void;
 }
+
+// Tailwind classes for each size, plus the panel's approximate height, used to
+// decide whether it fits below the field or should open above it.
+const SIZES = {
+  regular: {
+    panel: "p-6",
+    months: "gap-10",
+    month: "w-64",
+    title: "mb-4",
+    weekday: "pb-2",
+    grid: "gap-y-1",
+    day: "size-9",
+    nav: "size-8",
+    estimatedHeight: 330,
+  },
+  compact: {
+    panel: "p-4",
+    months: "gap-6",
+    month: "w-56",
+    title: "mb-2 text-sm",
+    weekday: "pb-1",
+    grid: "gap-y-0.5",
+    day: "size-8",
+    nav: "size-7",
+    estimatedHeight: 260,
+  },
+};
+
+// Gap between the field and the panel.
+const PANEL_OFFSET = 16;
 
 function toDate(value: string): Date {
   return new Date(`${value}T00:00:00`);
@@ -72,9 +104,14 @@ function DateRangePicker({
   minEndDate = minDate,
   maxDays,
   className = "",
+  compact = false,
   onChange,
 }: DateRangePickerProps) {
+  const size = compact ? SIZES.compact : SIZES.regular;
+
   const [isOpen, setIsOpen] = useState(false);
+  // Opens above the field when there isn't room below it.
+  const [opensUp, setOpensUp] = useState(false);
   const [hoverDate, setHoverDate] = useState("");
   const [focusedDate, setFocusedDate] = useState("");
   const [viewMonth, setViewMonth] = useState(() =>
@@ -87,6 +124,15 @@ function DateRangePicker({
 
   function open() {
     const initialDate = startDate || minDate;
+
+    const field = containerRef.current?.getBoundingClientRect();
+
+    if (field) {
+      const needed = size.estimatedHeight + PANEL_OFFSET;
+      const spaceBelow = window.innerHeight - field.bottom;
+
+      setOpensUp(spaceBelow < needed && field.top > spaceBelow);
+    }
 
     setViewMonth(getMonthStart(initialDate));
     setFocusedDate(initialDate);
@@ -228,8 +274,8 @@ function DateRangePicker({
 
   function renderMonth(month: Date) {
     return (
-      <div className="w-64">
-        <p className="mb-4 text-center font-medium">
+      <div className={size.month}>
+        <p className={`${size.title} text-center font-medium`}>
           {month.toLocaleDateString("en-US", {
             month: "long",
             year: "numeric",
@@ -238,13 +284,16 @@ function DateRangePicker({
 
         <div className="grid grid-cols-7 text-center text-xs text-gray-400">
           {WEEKDAYS.map((weekday) => (
-            <span key={weekday} className="pb-2">
+            <span key={weekday} className={size.weekday}>
               {weekday}
             </span>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-y-1" onKeyDown={handleGridKeyDown}>
+        <div
+          className={`grid grid-cols-7 ${size.grid}`}
+          onKeyDown={handleGridKeyDown}
+        >
           {getMonthCells(month).map((date, index) => {
             if (!date) {
               return <span key={`blank-${index}`} />;
@@ -271,7 +320,7 @@ function DateRangePicker({
                   aria-pressed={isEdge}
                   onClick={() => handleSelect(date)}
                   onMouseEnter={() => setHoverDate(date)}
-                  className={`size-9 rounded-full text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
+                  className={`${size.day} rounded-full text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-900 ${
                     isEdge
                       ? "bg-slate-900 text-white"
                       : disabled
@@ -329,16 +378,18 @@ function DateRangePicker({
           ref={panelRef}
           role="dialog"
           aria-label="Choose dates"
-          className="absolute top-full left-0 z-20 mt-4 w-max border bg-white p-6 text-slate-900 shadow-xl"
+          className={`absolute left-0 z-20 w-max border bg-white text-slate-900 shadow-xl ${size.panel} ${
+            opensUp ? "bottom-full mb-4" : "top-full mt-4"
+          }`}
           onMouseLeave={() => setHoverDate("")}
         >
-          <div className="relative flex gap-10">
+          <div className={`relative flex ${size.months}`}>
             <button
               type="button"
               aria-label="Previous month"
               disabled={!canGoBack}
               onClick={() => setViewMonth((month) => addMonths(month, -1))}
-              className="absolute top-0 left-0 flex size-8 -translate-y-1 items-center justify-center border hover:bg-slate-100 disabled:opacity-30"
+              className={`absolute top-0 left-0 flex ${size.nav} -translate-y-1 items-center justify-center border hover:bg-slate-100 disabled:opacity-30`}
             >
               ‹
             </button>
@@ -347,7 +398,7 @@ function DateRangePicker({
               type="button"
               aria-label="Next month"
               onClick={() => setViewMonth((month) => addMonths(month, 1))}
-              className="absolute top-0 right-0 flex size-8 -translate-y-1 items-center justify-center border hover:bg-slate-100"
+              className={`absolute top-0 right-0 flex ${size.nav} -translate-y-1 items-center justify-center border hover:bg-slate-100`}
             >
               ›
             </button>

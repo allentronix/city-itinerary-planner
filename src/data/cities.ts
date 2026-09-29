@@ -15,6 +15,8 @@ const cities: City[] = [
         description:
           "A famous riverside landmark known for its impressive architecture.",
         bestTime: "Early morning",
+        lat: 47.50694,
+        lon: 19.04556,
       },
       {
         id: "buda-castle",
@@ -22,6 +24,8 @@ const cities: City[] = [
         category: "attraction",
         description: "A historic castle complex with views across Budapest.",
         bestTime: "Late afternoon",
+        lat: 47.49611,
+        lon: 19.03972,
       },
       {
         id: "fishermans-bastion",
@@ -30,6 +34,8 @@ const cities: City[] = [
         description:
           "A neo-Gothic terrace with panoramic views over the Danube and Pest.",
         bestTime: "Sunset",
+        lat: 47.50222,
+        lon: 19.03472,
       },
       {
         id: "szechenyi-baths",
@@ -38,6 +44,8 @@ const cities: City[] = [
         description:
           "A large spa complex with outdoor thermal pools in City Park.",
         bestTime: "Morning",
+        lat: 47.51833,
+        lon: 19.08222,
       },
       {
         id: "gundel",
@@ -46,6 +54,8 @@ const cities: City[] = [
         description:
           "A historic fine-dining restaurant next to City Park, known for classic Hungarian dishes and the Gundel pancake.",
         bestTime: "Dinner",
+        lat: 47.51685,
+        lon: 19.07619,
       },
       {
         id: "borkonyha",
@@ -54,6 +64,8 @@ const cities: City[] = [
         description:
           "A Michelin-starred wine bistro serving modern Hungarian food with a long list of local wines.",
         bestTime: "Dinner",
+        lat: 47.4996,
+        lon: 19.0525,
       },
       {
         id: "new-york-cafe",
@@ -62,6 +74,8 @@ const cities: City[] = [
         description:
           "An opulent 19th-century grand café, often called one of the most beautiful cafés in the world.",
         bestTime: "Morning",
+        lat: 47.49868,
+        lon: 19.07046,
       },
       {
         id: "gerbeaud",
@@ -70,6 +84,8 @@ const cities: City[] = [
         description:
           "A classic coffee house and confectionery on Vörösmarty Square, famous for its cakes.",
         bestTime: "Afternoon",
+        lat: 47.49708,
+        lon: 19.05038,
       },
     ],
   },
@@ -87,6 +103,8 @@ const cities: City[] = [
         description:
           "An ancient amphitheater famous for its historic arena and grand architecture.",
         bestTime: "Early morning",
+        lat: 41.89028,
+        lon: 12.49222,
       },
       {
         id: "trevi-fountain",
@@ -95,6 +113,8 @@ const cities: City[] = [
         description:
           "A landmark fountain known for its beautiful stone detail and coins.",
         bestTime: "Late evening",
+        lat: 41.90093,
+        lon: 12.48331,
       },
       {
         id: "pantheon",
@@ -103,6 +123,8 @@ const cities: City[] = [
         description:
           "A remarkably preserved Roman temple with a vast concrete dome.",
         bestTime: "Late morning",
+        lat: 41.89861,
+        lon: 12.47694,
       },
       {
         id: "vatican-museums",
@@ -110,6 +132,8 @@ const cities: City[] = [
         category: "attraction",
         description: "A vast museum complex that includes the Sistine Chapel.",
         bestTime: "Early morning",
+        lat: 41.90639,
+        lon: 12.45444,
       },
       {
         id: "roscioli",
@@ -118,6 +142,8 @@ const cities: City[] = [
         description:
           "A deli and restaurant near Campo de' Fiori, known for carbonara, cured meats and cheeses.",
         bestTime: "Dinner",
+        lat: 41.89422,
+        lon: 12.47426,
       },
       {
         id: "da-enzo",
@@ -126,6 +152,8 @@ const cities: City[] = [
         description:
           "A small, popular trattoria in Trastevere serving traditional Roman dishes.",
         bestTime: "Lunch",
+        lat: 41.88809,
+        lon: 12.47781,
       },
       {
         id: "sant-eustachio",
@@ -134,6 +162,8 @@ const cities: City[] = [
         description:
           "A historic coffee bar near the Pantheon, famous for its creamy espresso.",
         bestTime: "Morning",
+        lat: 41.89825,
+        lon: 12.47543,
       },
       {
         id: "tazza-doro",
@@ -142,6 +172,8 @@ const cities: City[] = [
         description:
           "A coffee roaster steps from the Pantheon, known for its granita di caffè.",
         bestTime: "Afternoon",
+        lat: 41.89959,
+        lon: 12.47749,
       },
     ],
   },
@@ -159,6 +191,8 @@ const cities: City[] = [
         description:
           "The city's iron landmark with views across Paris from its decks.",
         bestTime: "Sunset",
+        lat: 48.8583,
+        lon: 2.29448,
       },
       {
         id: "louvre",
@@ -167,6 +201,8 @@ const cities: City[] = [
         description:
           "A former palace that now holds one of the world's largest art collections.",
         bestTime: "Early morning",
+        lat: 48.86111,
+        lon: 2.33583,
       },
       {
         id: "notre-dame",
@@ -175,6 +211,8 @@ const cities: City[] = [
         description:
           "A Gothic cathedral on the Île de la Cité, known for its façade and rose windows.",
         bestTime: "Morning",
+        lat: 48.853,
+        lon: 2.3498,
       },
       {
         id: "sacre-coeur",
@@ -183,6 +221,8 @@ const cities: City[] = [
         description:
           "A white basilica on Montmartre hill with wide views over the city.",
         bestTime: "Late afternoon",
+        lat: 48.88665,
+        lon: 2.34295,
       },
       {
         id: "bouillon-chartier",
@@ -191,6 +231,8 @@ const cities: City[] = [
         description:
           "A bustling Belle Époque dining hall serving affordable French classics since 1896.",
         bestTime: "Dinner",
+        lat: 48.87194,
+        lon: 2.34301,
       },
       {
         id: "relais-entrecote",
@@ -199,6 +241,8 @@ const cities: City[] = [
         description:
           "A no-menu steak-frites restaurant famous for its secret green sauce.",
         bestTime: "Lunch",
+        lat: 48.85464,
+        lon: 2.33277,
       },
       {
         id: "cafe-de-flore",
@@ -207,6 +251,8 @@ const cities: City[] = [
         description:
           "A legendary Saint-Germain café once frequented by writers and artists.",
         bestTime: "Morning",
+        lat: 48.85414,
+        lon: 2.33263,
       },
       {
         id: "les-deux-magots",
@@ -215,6 +261,8 @@ const cities: City[] = [
         description:
           "A historic café on Saint-Germain-des-Prés with a classic terrace for people-watching.",
         bestTime: "Afternoon",
+        lat: 48.85407,
+        lon: 2.33306,
       },
     ],
   },
@@ -232,6 +280,8 @@ const cities: City[] = [
         description:
           "A historic fortress on the Thames, home to the Crown Jewels.",
         bestTime: "Morning",
+        lat: 51.5082,
+        lon: -0.0762,
       },
       {
         id: "british-museum",
@@ -240,6 +290,8 @@ const cities: City[] = [
         description:
           "A major museum of world history and culture, including the Rosetta Stone.",
         bestTime: "Early morning",
+        lat: 51.51944,
+        lon: -0.12694,
       },
       {
         id: "big-ben",
@@ -248,6 +300,8 @@ const cities: City[] = [
         description:
           "London's clock tower and the riverside home of the UK Parliament.",
         bestTime: "Late afternoon",
+        lat: 51.50067,
+        lon: -0.12457,
       },
       {
         id: "westminster-abbey",
@@ -256,6 +310,8 @@ const cities: City[] = [
         description:
           "A Gothic church used for royal ceremonies and historic burials.",
         bestTime: "Morning",
+        lat: 51.4994,
+        lon: -0.12737,
       },
       {
         id: "dishoom",
@@ -264,6 +320,8 @@ const cities: City[] = [
         description:
           "A Bombay-style café restaurant known for its black daal and bacon naan rolls.",
         bestTime: "Dinner",
+        lat: 51.51243,
+        lon: -0.12686,
       },
       {
         id: "rules",
@@ -272,6 +330,8 @@ const cities: City[] = [
         description:
           "London's oldest restaurant, serving traditional British game, pies and puddings since 1798.",
         bestTime: "Dinner",
+        lat: 51.51083,
+        lon: -0.12319,
       },
       {
         id: "monmouth-coffee",
@@ -280,6 +340,8 @@ const cities: City[] = [
         description:
           "A much-loved coffee roaster by Borough Market, known for its filter coffee.",
         bestTime: "Morning",
+        lat: 51.5055,
+        lon: -0.09143,
       },
       {
         id: "bar-italia",
@@ -288,6 +350,8 @@ const cities: City[] = [
         description:
           "An iconic Soho espresso bar that has been open since 1949.",
         bestTime: "Afternoon",
+        lat: 51.51342,
+        lon: -0.13124,
       },
     ],
   },
@@ -305,6 +369,8 @@ const cities: City[] = [
         description:
           "Gaudí's unfinished basilica, known for its towers and stained glass.",
         bestTime: "Morning",
+        lat: 41.40369,
+        lon: 2.17433,
       },
       {
         id: "park-guell",
@@ -313,6 +379,8 @@ const cities: City[] = [
         description:
           "A hillside park with mosaic benches, pavilions, and city views.",
         bestTime: "Early morning",
+        lat: 41.41361,
+        lon: 2.15278,
       },
       {
         id: "la-rambla",
@@ -321,6 +389,8 @@ const cities: City[] = [
         description:
           "A busy tree-lined street from Plaça de Catalunya down toward the waterfront.",
         bestTime: "Late afternoon",
+        lat: 41.38139,
+        lon: 2.17306,
       },
       {
         id: "casa-batllo",
@@ -329,6 +399,8 @@ const cities: City[] = [
         description:
           "A Gaudí townhouse on Passeig de Gràcia with a colorful tiled façade.",
         bestTime: "Late morning",
+        lat: 41.39158,
+        lon: 2.16492,
       },
       {
         id: "cal-pep",
@@ -337,6 +409,8 @@ const cities: City[] = [
         description:
           "A lively counter-seating tapas bar in El Born, famous for its seafood.",
         bestTime: "Lunch",
+        lat: 41.39615,
+        lon: 2.14892,
       },
       {
         id: "el-xampanyet",
@@ -345,6 +419,8 @@ const cities: City[] = [
         description:
           "A tiled, old-school cava bar near the Picasso Museum serving simple tapas.",
         bestTime: "Evening",
+        lat: 41.38451,
+        lon: 2.18167,
       },
       {
         id: "els-quatre-gats",
@@ -353,6 +429,8 @@ const cities: City[] = [
         description:
           "A modernist café once frequented by Picasso, in a building by Puig i Cadafalch.",
         bestTime: "Afternoon",
+        lat: 41.38574,
+        lon: 2.17364,
       },
       {
         id: "granja-viader",
@@ -361,6 +439,8 @@ const cities: City[] = [
         description:
           "A historic granja off La Rambla, known for thick hot chocolate and Cacaolat.",
         bestTime: "Morning",
+        lat: 41.38296,
+        lon: 2.171,
       },
     ],
   },
@@ -378,6 +458,8 @@ const cities: City[] = [
         description:
           "A harbor monument on Liberty Island, reached by ferry from Manhattan.",
         bestTime: "Morning",
+        lat: 40.68921,
+        lon: -74.04443,
       },
       {
         id: "central-park",
@@ -386,6 +468,8 @@ const cities: City[] = [
         description:
           "A large urban park in Manhattan with lakes, paths, and open lawns.",
         bestTime: "Late afternoon",
+        lat: 40.7825,
+        lon: -73.96611,
       },
       {
         id: "empire-state-building",
@@ -394,6 +478,8 @@ const cities: City[] = [
         description:
           "An Art Deco skyscraper with an observation deck over Midtown.",
         bestTime: "Sunset",
+        lat: 40.74833,
+        lon: -73.98556,
       },
       {
         id: "metropolitan-museum",
@@ -402,6 +488,8 @@ const cities: City[] = [
         description:
           "A vast art museum on Fifth Avenue covering thousands of years of work.",
         bestTime: "Early morning",
+        lat: 40.77944,
+        lon: -73.96333,
       },
       {
         id: "katzs-deli",
@@ -410,6 +498,8 @@ const cities: City[] = [
         description:
           "A Lower East Side institution since 1888, famous for its pastrami on rye.",
         bestTime: "Lunch",
+        lat: 40.72234,
+        lon: -73.98735,
       },
       {
         id: "joes-pizza",
@@ -418,6 +508,8 @@ const cities: City[] = [
         description:
           "A classic Greenwich Village slice shop serving New York-style pizza.",
         bestTime: "Evening",
+        lat: 40.73055,
+        lon: -74.00206,
       },
       {
         id: "caffe-reggio",
@@ -426,6 +518,8 @@ const cities: City[] = [
         description:
           "A Greenwich Village café open since 1927, said to have introduced the cappuccino to America.",
         bestTime: "Afternoon",
+        lat: 40.73032,
+        lon: -74.00036,
       },
       {
         id: "venieros",
@@ -434,6 +528,8 @@ const cities: City[] = [
         description:
           "An East Village pastry shop and café dating back to 1894, known for cannoli and cheesecake.",
         bestTime: "Afternoon",
+        lat: 40.72947,
+        lon: -73.98448,
       },
     ],
   },
@@ -451,6 +547,8 @@ const cities: City[] = [
         description:
           "Tokyo's oldest temple, approached through the Nakamise shopping street.",
         bestTime: "Early morning",
+        lat: 35.71456,
+        lon: 139.79664,
       },
       {
         id: "meiji-shrine",
@@ -458,6 +556,8 @@ const cities: City[] = [
         category: "attraction",
         description: "A Shinto shrine set in a forested park near Harajuku.",
         bestTime: "Morning",
+        lat: 35.67611,
+        lon: 139.69917,
       },
       {
         id: "shibuya-crossing",
@@ -466,6 +566,8 @@ const cities: City[] = [
         description:
           "A famous scramble intersection surrounded by screens and shopping streets.",
         bestTime: "Evening",
+        lat: 35.6595,
+        lon: 139.70054,
       },
       {
         id: "tokyo-skytree",
@@ -474,6 +576,8 @@ const cities: City[] = [
         description:
           "A broadcasting tower with observation decks over the city.",
         bestTime: "Sunset",
+        lat: 35.71006,
+        lon: 139.81072,
       },
       {
         id: "ichiran-shibuya",
@@ -482,6 +586,8 @@ const cities: City[] = [
         description:
           "A tonkotsu ramen shop where you eat in individual booths.",
         bestTime: "Evening",
+        lat: 35.66096,
+        lon: 139.6987,
       },
       {
         id: "gonpachi",
@@ -490,6 +596,8 @@ const cities: City[] = [
         description:
           "A dramatic izakaya-style restaurant that inspired a scene in Kill Bill.",
         bestTime: "Dinner",
+        lat: 35.66016,
+        lon: 139.72359,
       },
       {
         id: "blue-bottle-kiyosumi",
@@ -506,6 +614,8 @@ const cities: City[] = [
         description:
           "A specialty coffee bean shop in Omotesando, known for expert hand-brewed tastings.",
         bestTime: "Afternoon",
+        lat: 35.66848,
+        lon: 139.7109,
       },
     ],
   },
@@ -523,6 +633,8 @@ const cities: City[] = [
         description:
           "A former cathedral and mosque with a vast dome in Sultanahmet.",
         bestTime: "Morning",
+        lat: 41.00833,
+        lon: 28.98,
       },
       {
         id: "blue-mosque",
@@ -531,6 +643,8 @@ const cities: City[] = [
         description:
           "A mosque known for its cascading domes and blue interior tiles.",
         bestTime: "Late morning",
+        lat: 41.00539,
+        lon: 28.97682,
       },
       {
         id: "grand-bazaar",
@@ -539,6 +653,8 @@ const cities: City[] = [
         description:
           "A historic covered market with thousands of shops and stalls.",
         bestTime: "Afternoon",
+        lat: 41.01058,
+        lon: 28.96793,
       },
       {
         id: "topkapi-palace",
@@ -547,6 +663,8 @@ const cities: City[] = [
         description:
           "The Ottoman sultans' palace, with courtyards overlooking the Bosphorus.",
         bestTime: "Early morning",
+        lat: 41.013,
+        lon: 28.984,
       },
       {
         id: "hamdi",
@@ -555,6 +673,8 @@ const cities: City[] = [
         description:
           "A kebab restaurant near the Spice Bazaar with views over the Golden Horn.",
         bestTime: "Dinner",
+        lat: 41.01716,
+        lon: 28.9699,
       },
       {
         id: "karakoy-lokantasi",
@@ -563,6 +683,8 @@ const cities: City[] = [
         description:
           "A stylish restaurant serving Turkish home-style dishes and meze.",
         bestTime: "Lunch",
+        lat: 41.02459,
+        lon: 28.98003,
       },
       {
         id: "mandabatmaz",
@@ -571,6 +693,8 @@ const cities: City[] = [
         description:
           "A tiny café off İstiklal Avenue, famous for its thick Turkish coffee.",
         bestTime: "Afternoon",
+        lat: 41.03276,
+        lon: 28.97617,
       },
       {
         id: "pierre-loti-cafe",
@@ -579,6 +703,8 @@ const cities: City[] = [
         description:
           "A hilltop café in Eyüp with panoramic views over the Golden Horn.",
         bestTime: "Sunset",
+        lat: 41.05371,
+        lon: 28.93354,
       },
     ],
   },
@@ -596,6 +722,8 @@ const cities: City[] = [
         description:
           "A castle complex above the Vltava, including St. Vitus Cathedral.",
         bestTime: "Early morning",
+        lat: 50.09,
+        lon: 14.4,
       },
       {
         id: "charles-bridge",
@@ -604,6 +732,8 @@ const cities: City[] = [
         description:
           "A historic stone bridge lined with statues, linking Old Town and Malá Strana.",
         bestTime: "Sunrise",
+        lat: 50.08639,
+        lon: 14.41194,
       },
       {
         id: "old-town-square",
@@ -612,6 +742,8 @@ const cities: City[] = [
         description:
           "The city's main square, known for the Astronomical Clock and baroque churches.",
         bestTime: "Late afternoon",
+        lat: 50.0875,
+        lon: 14.42139,
       },
       {
         id: "jewish-quarter",
@@ -620,6 +752,8 @@ const cities: City[] = [
         description:
           "Prague's historic Jewish quarter, with synagogues and the Old Jewish Cemetery.",
         bestTime: "Morning",
+        lat: 50.09028,
+        lon: 14.41944,
       },
       {
         id: "lokal-dlouha",
@@ -628,6 +762,8 @@ const cities: City[] = [
         description:
           "A lively beer hall serving fresh tank Pilsner and classic Czech dishes.",
         bestTime: "Dinner",
+        lat: 50.0907,
+        lon: 14.42576,
       },
       {
         id: "u-fleku",
@@ -636,6 +772,8 @@ const cities: City[] = [
         description:
           "A centuries-old brewery and beer hall known for its dark lager.",
         bestTime: "Evening",
+        lat: 50.07874,
+        lon: 14.41702,
       },
       {
         id: "cafe-louvre",
@@ -644,6 +782,8 @@ const cities: City[] = [
         description:
           "A grand café from 1902 once visited by Kafka and Einstein.",
         bestTime: "Morning",
+        lat: 50.08207,
+        lon: 14.41873,
       },
       {
         id: "cafe-savoy",
@@ -652,6 +792,8 @@ const cities: City[] = [
         description:
           "An elegant Viennese-style café in Malá Strana with a stunning painted ceiling.",
         bestTime: "Morning",
+        lat: 50.08093,
+        lon: 14.40722,
       },
     ],
   },
@@ -669,6 +811,8 @@ const cities: City[] = [
         description:
           "The hilltop citadel that includes the Parthenon and other ancient temples.",
         bestTime: "Early morning",
+        lat: 37.97167,
+        lon: 23.72611,
       },
       {
         id: "acropolis-museum",
@@ -677,6 +821,8 @@ const cities: City[] = [
         description:
           "A museum at the foot of the Acropolis displaying finds from the site.",
         bestTime: "Late morning",
+        lat: 37.96842,
+        lon: 23.72847,
       },
       {
         id: "plaka",
@@ -685,6 +831,8 @@ const cities: City[] = [
         description:
           "A historic neighborhood of narrow streets below the Acropolis.",
         bestTime: "Evening",
+        lat: 37.97222,
+        lon: 23.73056,
       },
       {
         id: "ancient-agora",
@@ -693,6 +841,8 @@ const cities: City[] = [
         description:
           "The civic heart of ancient Athens, with the Temple of Hephaestus.",
         bestTime: "Afternoon",
+        lat: 37.975,
+        lon: 23.7225,
       },
       {
         id: "o-thanasis",
@@ -701,6 +851,8 @@ const cities: City[] = [
         description:
           "A Monastiraki favourite for kebab and souvlaki since the 1960s.",
         bestTime: "Lunch",
+        lat: 37.97617,
+        lon: 23.72704,
       },
       {
         id: "karamanlidika",
@@ -709,6 +861,8 @@ const cities: City[] = [
         description:
           "A deli and taverna serving cured meats, cheeses and meze.",
         bestTime: "Dinner",
+        lat: 37.97707,
+        lon: 23.72279,
       },
       {
         id: "taf-coffee",
@@ -725,6 +879,8 @@ const cities: City[] = [
         description:
           "A whimsical dessert café in Psyrri with elaborate seasonal decorations.",
         bestTime: "Afternoon",
+        lat: 37.97774,
+        lon: 23.72437,
       },
     ],
   },

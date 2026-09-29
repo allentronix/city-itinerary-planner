@@ -126,6 +126,7 @@ function Home() {
             <DateRangePicker
               id="trip-dates"
               className="mt-1"
+              compact
               startDate={startDate}
               endDate={endDate}
               minDate={today}
