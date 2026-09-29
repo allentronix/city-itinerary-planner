@@ -14,6 +14,8 @@ A small web app for planning a city trip day by day. Pick a city and how long yo
 - **Filter places:** show all places, only those not added yet, sights, restaurants, coffee shops, or morning, afternoon or evening spots.
 - **Day-by-day itinerary:** a summary of how many days are planned, then activities grouped by day and sorted by time, with the travel time and free time between stops shown. You can edit or remove any activity (removing asks you to confirm).
 
+- **Walking times and maps:** for cities found through search, the itinerary shows the estimated walk between stops (and warns when the gap is too short), pre-fills travel time, and can show each day's stops on a map.
+- **Drafts:** a trip you haven't saved is kept in your browser, so a refresh or closed tab doesn't lose it, and the home page offers to continue it.
 - **Save trips:** press **Save trip** under your itinerary to keep it in **My trips**. After that, every change saves automatically, and you can start planning another trip without losing it. Leaving a trip you haven't saved asks you to confirm first.
 
 Saved trips are stored in your browser (`localStorage`), so they stay on this device and browser only.
@@ -56,7 +58,9 @@ src/
 
 ## Credits
 
-City banner photos are from [Unsplash](https://unsplash.com) and used under the [Unsplash License](https://unsplash.com/license):
+Photos for cities found through search come from [Wikimedia Commons](https://commons.wikimedia.org), credited on each page. Maps use [Leaflet](https://leafletjs.com) and [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles; sight rankings use [Wikipedia](https://www.wikipedia.org) and [Wikidata](https://www.wikidata.org).
+
+Built-in city banner photos are from [Unsplash](https://unsplash.com) and used under the [Unsplash License](https://unsplash.com/license):
 
 - Budapest: [Ervin Lukacs](https://unsplash.com/@lukerv4)
 - Rome: [David Köhler](https://unsplash.com/@davidkhlr)

@@ -4,6 +4,7 @@ interface PageBannerProps {
   eyebrow?: string;
   title: string;
   image?: string;
+  // Full credit line, e.g. "Ervin Lukacs / Unsplash".
   photoCredit?: string;
   children?: ReactNode;
 }
@@ -43,7 +44,7 @@ function PageBanner({
 
       {photoCredit && (
         <p className="absolute right-3 bottom-2 text-[11px] text-white/60">
-          Photo: {photoCredit} / Unsplash
+          Photo: {photoCredit}
         </p>
       )}
     </header>

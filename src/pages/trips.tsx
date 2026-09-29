@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import PageBanner from "../components/page-banner";
 import { Button, buttonVariants } from "../components/ui/button";
+import { useCityPhoto } from "../hooks/use-city-photo";
 import { useSavedTrips } from "../hooks/use-saved-trips";
 import { formatDateRange, getTripDates } from "../utils/dates";
 import {
@@ -12,6 +13,7 @@ import {
 
 function TripCard({ trip }: { trip: SavedTrip }) {
   const city = getTripCity(trip);
+  const photo = useCityPhoto(city);
   const cityName = city?.name ?? "Unknown city";
   const dayCount = getTripDates(trip.startDate, trip.endDate).length;
   const placeCount = trip.items.length;
@@ -24,9 +26,9 @@ function TripCard({ trip }: { trip: SavedTrip }) {
 
   return (
     <div className="flex flex-col border bg-white">
-      {city?.image ? (
+      {photo ? (
         <img
-          src={city.image}
+          src={photo.url}
           alt=""
           className="aspect-[16/9] w-full object-cover"
         />

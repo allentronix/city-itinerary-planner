@@ -1,11 +1,17 @@
 import { useState, type SubmitEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import cities from "../data/cities";
 import type { CityInfo } from "../data/types";
 import CitySearch from "../components/city-search";
 import DateRangePicker from "../components/date-range-picker";
 import { Button } from "../components/ui/button";
-import { MAX_TRIP_DAYS, getTodayDate, validateTripDates } from "../utils/dates";
+import {
+  MAX_TRIP_DAYS,
+  formatDateRange,
+  getTodayDate,
+  validateTripDates,
+} from "../utils/dates";
+import { clearDraft, loadDraft } from "../utils/draft-trip";
+import { getTripUrl } from "../utils/trip-url";
 
 const LABEL_CLASS =
   "block text-xs font-medium tracking-wider text-slate-800 uppercase";
@@ -18,6 +24,15 @@ function Home() {
   const [error, setError] = useState("");
 
   const today = getTodayDate();
+
+  // An unsaved plan from earlier, offered back unless its dates have passed.
+  const [draft, setDraft] = useState(() => {
+    const saved = loadDraft();
+
+    return saved && saved.items.length > 0 && saved.trip.endDate >= today
+      ? saved
+      : null;
+  });
 
   function handleExplore(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,20 +49,7 @@ function Home() {
       return;
     }
 
-    const params = new URLSearchParams({ start: startDate, end: endDate });
-
-    // Cities found through search carry their details in the URL.
-    if (!cities.some((builtIn) => builtIn.id === city.id)) {
-      params.set("name", city.name);
-      params.set("country", city.country);
-
-      if (city.lat !== undefined && city.lon !== undefined) {
-        params.set("lat", String(city.lat));
-        params.set("lon", String(city.lon));
-      }
-    }
-
-    navigate(`/city/${city.id}?${params}`);
+    navigate(getTripUrl(city, { startDate, endDate }));
   }
 
   return (
@@ -64,6 +66,40 @@ function Home() {
         <h1 className="max-w-3xl font-serif text-5xl tracking-tight text-white sm:text-7xl">
           Plan your perfect city trip
         </h1>
+
+        {draft && (
+          <div className="mt-8 flex max-w-2xl flex-wrap items-center gap-x-6 gap-y-3 bg-white/95 px-5 py-4 shadow-lg">
+            <p className="flex-1 text-slate-900">
+              <span className="font-medium">
+                Continue your {draft.city.name} plan?
+              </span>
+              <span className="block text-sm text-slate-500">
+                {formatDateRange(draft.trip.startDate, draft.trip.endDate)} ·{" "}
+                {draft.items.length}{" "}
+                {draft.items.length === 1 ? "place" : "places"} · not saved yet
+              </span>
+            </p>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => navigate(getTripUrl(draft.city, draft.trip))}
+              >
+                Continue
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  clearDraft();
+                  setDraft(null);
+                }}
+              >
+                Discard
+              </Button>
+            </div>
+          </div>
+        )}
 
         <form
           onSubmit={handleExplore}

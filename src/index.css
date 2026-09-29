@@ -140,3 +140,18 @@
     cursor: not-allowed;
   }
 }
+/* Numbered stops on the day map (see day-map.tsx). */
+.day-map-marker {
+  box-sizing: border-box;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  border-radius: 9999px;
+  background: #1e293b;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
+}

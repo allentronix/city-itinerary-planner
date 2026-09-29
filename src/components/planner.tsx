@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Link, useBlocker, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useBlocker,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 import type {
   City,
@@ -29,11 +34,28 @@ import { canVisitDaily, getUnavailableDates } from "../utils/places";
 
 import { saveTrip, toSavedCity, toSavedItems } from "../utils/saved-trips";
 
+import {
+  clearDraft,
+  isDraftFor,
+  loadDraft,
+  saveDraft,
+} from "../utils/draft-trip";
+
+import { getTripSearchParams } from "../utils/trip-url";
+
 import { PLACE_TYPES, type PlaceType } from "../utils/api";
 
 import { useCityPlaces } from "../hooks/use-city-places";
 
-import { isWithinSameDay, timeToMinutes } from "../utils/time";
+import { useCityPhoto } from "../hooks/use-city-photo";
+
+import {
+  isWithinSameDay,
+  timeToMinutes,
+  toTravelTimeOption,
+} from "../utils/time";
+
+import { estimateWalk } from "../utils/geo";
 
 type PlaceFilter = "all" | "not-added" | PlaceCategory | TimeOfDay;
 
@@ -84,6 +106,8 @@ function Planner({
 }: PlannerProps) {
   const navigate = useNavigate();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [itinerary, setItinerary] = useState<ItineraryItem[]>(initialItinerary);
 
   const [trip, setTrip] = useState<Trip | null>(initialTrip);
@@ -99,6 +123,8 @@ function Planner({
   } = useCityPlaces(city);
 
   const isApiCity = city.source === "api";
+
+  const photo = useCityPhoto(city);
 
   const [saveError, setSaveError] = useState("");
 
@@ -142,20 +168,33 @@ function Planner({
     setSaveError(saved ? "" : "Couldn't save your latest changes.");
   }, [savedTripId, trip, itinerary, city]);
 
-  // Warn before leaving the app (refresh, closing the tab) with an unsaved trip.
+  // Keep an unsaved trip as a draft, so a refresh or closed tab doesn't lose it.
   useEffect(() => {
-    if (!hasUnsavedWork) {
+    if (savedTripId || !trip) {
       return;
     }
 
-    function handleBeforeUnload(event: BeforeUnloadEvent) {
-      event.preventDefault();
+    if (itinerary.length > 0) {
+      saveDraft(city, trip, itinerary);
+    } else if (isDraftFor(loadDraft(), city.id)) {
+      // Everything was removed: drop this city's draft, but never another city's.
+      clearDraft();
+    }
+  }, [savedTripId, trip, itinerary, city]);
+
+  // Keep the URL's dates in step with an unsaved trip, so a refresh reopens the same dates.
+  useEffect(() => {
+    if (savedTripId || !trip) {
+      return;
     }
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedWork]);
+    if (
+      searchParams.get("start") !== trip.startDate ||
+      searchParams.get("end") !== trip.endDate
+    ) {
+      setSearchParams(getTripSearchParams(city, trip), { replace: true });
+    }
+  }, [savedTripId, trip, city, searchParams, setSearchParams]);
 
   // Warn before moving to another page in the app with an unsaved trip.
   const blocker = useBlocker(
@@ -172,7 +211,7 @@ function Planner({
 
     if (
       window.confirm(
-        "You have an unsaved trip. Leave this page and lose your plans?",
+        "This trip isn't saved yet. It's kept as a draft, but planning another trip will replace it. Leave this page?",
       )
     ) {
       blocker.proceed();
@@ -202,6 +241,7 @@ function Planner({
       return;
     }
 
+    clearDraft();
     isSavingRef.current = true;
     navigate(`/trips/${id}`, { replace: true });
   }
@@ -321,6 +361,24 @@ function Planner({
     return getScheduleError(schedule, excludeItemId) === null;
   }
 
+  // Travel time from this place to the next stop that day, from walking distance.
+  function suggestTravelTime(place: Place, schedule: Schedule): number {
+    const start = timeToMinutes(schedule.startTime);
+
+    const nextStop = itinerary
+      .filter(
+        (item) =>
+          item.date === schedule.date && timeToMinutes(item.startTime) > start,
+      )
+      .sort(
+        (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
+      )[0];
+
+    const walk = nextStop ? estimateWalk(place, nextStop.place) : null;
+
+    return walk ? toTravelTimeOption(walk.minutes) : 0;
+  }
+
   function handleAddPlace(place: Place, schedule: Schedule): string | null {
     const error =
       getRepeatVisitError(place, schedule.date) ?? getScheduleError(schedule);
@@ -389,8 +447,8 @@ function Planner({
       <PageBanner
         eyebrow={city.country}
         title={city.name}
-        image={city.image}
-        photoCredit={city.photoCredit}
+        image={photo?.url}
+        photoCredit={photo?.credit}
       >
         {trip && !isEditingTrip && (
           <div className="flex flex-wrap items-center gap-4">
@@ -543,6 +601,9 @@ function Planner({
                       bookedDates={getBookedDates(place.id)}
                       unavailableDates={getUnavailableDatesFor(place)}
                       isTimeAvailable={(schedule) => isTimeAvailable(schedule)}
+                      suggestTravelTime={(schedule) =>
+                        suggestTravelTime(place, schedule)
+                      }
                       onAdd={(schedule) => handleAddPlace(place, schedule)}
                     />
                   ))}

@@ -1,6 +1,6 @@
 import type { ItineraryItem, Place, Schedule, Trip } from "../data/types";
 
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import {
   formatShortDate,
@@ -9,6 +9,11 @@ import {
 } from "../utils/dates";
 
 import { addMinutesToTime, formatDuration, timeToMinutes } from "../utils/time";
+
+import { estimateWalk, formatDistance, hasCoordinates } from "../utils/geo";
+
+// Leaflet is only downloaded the first time someone opens a map.
+const DayMap = lazy(() => import("./day-map"));
 
 import EditItineraryItem from "./edit-itinerary-item";
 
@@ -97,6 +102,17 @@ function Itinerary({
 }: ItineraryProps) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
+  // Days whose map is open.
+  const [mapDates, setMapDates] = useState<string[]>([]);
+
+  function toggleMap(date: string) {
+    setMapDates((open) =>
+      open.includes(date)
+        ? open.filter((openDate) => openDate !== date)
+        : [...open, date],
+    );
+  }
+
   const tripDates = getTripDates(trip.startDate, trip.endDate);
 
   const sections = groupIntoSections(tripDates, itinerary);
@@ -107,6 +123,12 @@ function Itinerary({
 
   function renderItem(item: ItineraryItem, nextItem?: ItineraryItem) {
     const endTime = addMinutesToTime(item.startTime, item.duration);
+
+    // Estimated walk to the next stop (places from search have coordinates).
+    const walk = nextItem ? estimateWalk(item.place, nextItem.place) : null;
+    const gapToNext = nextItem
+      ? getTimeDifference(endTime, nextItem.startTime)
+      : 0;
 
     const freeTime = nextItem
       ? getTimeDifference(endTime, nextItem.startTime) - item.travelTime
@@ -189,6 +211,19 @@ function Itinerary({
           </p>
         )}
 
+        {walk &&
+          (walk.minutes > gapToNext ? (
+            <p className="py-2 text-center text-xs text-amber-700">
+              ~{formatDuration(walk.minutes)} walk ({formatDistance(walk.km)}),
+              but only {formatDuration(Math.max(gapToNext, 0))} until{" "}
+              {nextItem?.place.name}
+            </p>
+          ) : (
+            <p className="py-2 text-center text-xs text-gray-400">
+              ~{formatDuration(walk.minutes)} walk · {formatDistance(walk.km)}
+            </p>
+          ))}
+
         {nextItem && freeTime > 0 && (
           <p className="py-2 text-center text-xs text-gray-400">
             · {formatDuration(freeTime)} free time
@@ -217,14 +252,45 @@ function Itinerary({
           />
         ) : (
           <div key={section.date}>
-            <div className="mt-8 border-b pb-2">
-              <h3 className="font-serif text-xl">Day {section.dayNumber}</h3>
+            <div className="mt-8 flex items-end justify-between gap-3 border-b pb-2">
+              <div>
+                <h3 className="font-serif text-xl">Day {section.dayNumber}</h3>
 
-              <p className="text-sm text-gray-500">
-                {formatWeekdayDate(section.date)} · {section.items.length}{" "}
-                {section.items.length === 1 ? "place" : "places"} planned
-              </p>
+                <p className="text-sm text-gray-500">
+                  {formatWeekdayDate(section.date)} · {section.items.length}{" "}
+                  {section.items.length === 1 ? "place" : "places"} planned
+                </p>
+              </div>
+
+              {section.items.some((item) => hasCoordinates(item.place)) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-expanded={mapDates.includes(section.date)}
+                  onClick={() => toggleMap(section.date)}
+                >
+                  {mapDates.includes(section.date) ? "Hide map" : "Show map"}
+                </Button>
+              )}
             </div>
+
+            {mapDates.includes(section.date) && (
+              <div className="mt-3">
+                <Suspense
+                  fallback={
+                    <p className="flex h-64 items-center justify-center border text-sm text-slate-500">
+                      Loading map…
+                    </p>
+                  }
+                >
+                  <DayMap
+                    stops={section.items
+                      .map((item) => item.place)
+                      .filter(hasCoordinates)}
+                  />
+                </Suspense>
+              </div>
+            )}
 
             <div className="mt-3 space-y-3">
               {section.items.map((item, index) =>

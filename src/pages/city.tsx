@@ -4,6 +4,8 @@ import cities from "../data/cities";
 import type { City, Trip } from "../data/types";
 import Planner from "../components/planner";
 import { validateTripDates } from "../utils/dates";
+import { isDraftFor, loadDraft } from "../utils/draft-trip";
+import { toItinerary } from "../utils/saved-trips";
 import NotFound from "./not-found";
 
 function buildTripFromSearch(
@@ -66,15 +68,28 @@ function CityPage() {
     return <NotFound title="City not found" />;
   }
 
+  const initialTrip = buildTripFromSearch(
+    city.id,
+    searchParams.get("start"),
+    searchParams.get("end"),
+  );
+
+  // Pick up an unsaved draft for this city and dates (after a refresh or "Continue").
+  const draft = loadDraft();
+  const draftItinerary =
+    isDraftFor(draft, city.id) &&
+    initialTrip &&
+    draft.trip.startDate === initialTrip.startDate &&
+    draft.trip.endDate === initialTrip.endDate
+      ? toItinerary(draft.items, city).itinerary
+      : undefined;
+
   return (
     <Planner
       key={city.id}
       city={city}
-      initialTrip={buildTripFromSearch(
-        city.id,
-        searchParams.get("start"),
-        searchParams.get("end"),
-      )}
+      initialTrip={initialTrip}
+      initialItinerary={draftItinerary}
     />
   );
 }

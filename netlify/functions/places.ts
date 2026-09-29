@@ -9,6 +9,7 @@ import {
 } from "../lib/geoapify";
 import { reserveCredits, UsageLimitError } from "../lib/usage";
 import { getWikidataInfo, type WikidataInfo } from "../lib/wikidata";
+import { findFamousSights } from "../lib/famous-sights";
 
 // GET /api/places?city=<Geoapify place id>&type=sights|restaurants|cafes[&lat=&lon=]
 // Returns about 20 places for one city and type. Each city and type is fetched
@@ -43,7 +44,7 @@ const PLACE_TYPES: Record<PlaceType, PlaceTypeConfig> = {
 };
 
 const RESULTS_PER_TYPE = 20;
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const MAX_DESCRIPTION_LENGTH = 140;
 const MAX_CUISINES = 2;
 // Cuisine tags that don't say anything useful on a card.
@@ -207,7 +208,11 @@ async function loadPlaces(
     params.bias = `proximity:${center.lon},${center.lat}`;
   }
 
-  const data = await callGeoapify<GeoapifyPlaces>("/v2/places", params);
+  // For sights, look up the city's most famous places at the same time.
+  const [data, famousSights] = await Promise.all([
+    callGeoapify<GeoapifyPlaces>("/v2/places", params),
+    type === "sights" && center ? findFamousSights(center) : [],
+  ]);
 
   let candidates: Candidate[] = (data.features ?? []).map((feature, index) => ({
     properties: feature.properties,
@@ -215,13 +220,40 @@ async function loadPlaces(
   }));
 
   if (type === "sights") {
-    const wikidata = await getWikidataInfo(
-      candidates
-        .map((candidate) => candidate.properties.wiki_and_media?.wikidata)
-        .filter((id): id is string => Boolean(id)),
+    // Famous sights already come with their Wikidata details.
+    const wikidata = new Map<string, WikidataInfo>(
+      famousSights.map((sight) => [sight.wikidataId, sight]),
     );
 
-    candidates = candidates.map((candidate) => ({
+    const missingIds = candidates
+      .map((candidate) => candidate.properties.wiki_and_media?.wikidata)
+      .filter((id): id is string => Boolean(id) && !wikidata.has(id as string));
+
+    for (const [id, info] of await getWikidataInfo(missingIds)) {
+      wikidata.set(id, info);
+    }
+
+    // Add famous sights Geoapify didn't return (e.g. just outside its nearest 300).
+    const geoapifyIds = new Set(
+      candidates.map(
+        (candidate) => candidate.properties.wiki_and_media?.wikidata,
+      ),
+    );
+
+    const extraCandidates: Candidate[] = famousSights
+      .filter((sight) => !geoapifyIds.has(sight.wikidataId))
+      .map((sight, index) => ({
+        properties: {
+          place_id: `wikidata-${sight.wikidataId}`,
+          name: sight.label,
+          lat: sight.lat,
+          lon: sight.lon,
+          wiki_and_media: { wikidata: sight.wikidataId },
+        },
+        distanceRank: candidates.length + index,
+      }));
+
+    candidates = [...candidates, ...extraCandidates].map((candidate) => ({
       ...candidate,
       wikidata: wikidata.get(
         candidate.properties.wiki_and_media?.wikidata ?? "",

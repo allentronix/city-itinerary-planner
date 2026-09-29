@@ -4,6 +4,21 @@ export const DURATION_OPTIONS = [30, 45, 60, 90, 120, 150, 180, 240, 300, 360];
 
 export const TRAVEL_TIME_OPTIONS = [0, 15, 30, 45, 60];
 
+// Walks this short don't need their own travel time.
+const NEGLIGIBLE_WALK_MINUTES = 5;
+
+// Rounds an estimated walk up to the nearest travel-time option (at most 1 hour).
+export function toTravelTimeOption(walkMinutes: number): number {
+  if (walkMinutes <= NEGLIGIBLE_WALK_MINUTES) {
+    return 0;
+  }
+
+  return (
+    TRAVEL_TIME_OPTIONS.find((option) => option >= walkMinutes) ??
+    TRAVEL_TIME_OPTIONS[TRAVEL_TIME_OPTIONS.length - 1]
+  );
+}
+
 export function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
 

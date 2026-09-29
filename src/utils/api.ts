@@ -141,3 +141,67 @@ export function requestPlaces(city: CityInfo, type: PlaceType) {
     })
     .finally(notify);
 }
+
+// --- City photos ----------------------------------------------------------
+// Photos for cities found through search, from Wikimedia Commons. Looked up
+// once per city and kept in the browser for 30 days.
+
+export interface CityPhoto {
+  url: string;
+  credit: string;
+}
+
+const PHOTO_CACHE_PREFIX = "itiplanner.city-photo.v1";
+const PHOTO_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+// undefined: not looked up yet; null: loading, failed, or the city has no photo.
+const photos = new Map<string, CityPhoto | null>();
+
+export function getCityPhoto(cityId: string): CityPhoto | null | undefined {
+  return photos.get(cityId);
+}
+
+export function requestCityPhoto(cityId: string) {
+  if (photos.has(cityId)) {
+    return;
+  }
+
+  const cacheKey = `${PHOTO_CACHE_PREFIX}.${cityId}`;
+
+  try {
+    const raw = localStorage.getItem(cacheKey);
+    const cached = raw
+      ? (JSON.parse(raw) as { savedAt: number; photo: CityPhoto | null })
+      : null;
+
+    if (cached && Date.now() - cached.savedAt < PHOTO_CACHE_MAX_AGE_MS) {
+      photos.set(cityId, cached.photo);
+      notify();
+      return;
+    }
+  } catch {
+    // Unreadable cache: look it up again.
+  }
+
+  photos.set(cityId, null);
+
+  getJson<{ photo: CityPhoto | null }>(
+    `/api/city-photo?${new URLSearchParams({ city: cityId })}`,
+  )
+    .then(({ photo }) => {
+      photos.set(cityId, photo);
+
+      try {
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify({ savedAt: Date.now(), photo }),
+        );
+      } catch {
+        // Storage full or blocked: the photo still shows for this visit.
+      }
+    })
+    .catch(() => {
+      // No photo is fine: banners and cards fall back to a plain background.
+    })
+    .finally(notify);
+}
