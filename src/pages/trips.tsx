@@ -1,5 +1,6 @@
 import { useId, useState, type SubmitEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ConfirmDialog from "../components/confirm-dialog";
 import DateRangePicker from "../components/date-range-picker";
 import PageBanner from "../components/page-banner";
 import { Button, buttonVariants } from "../components/ui/button";
@@ -185,11 +186,7 @@ function TripCard({ trip }: { trip: SavedTrip }) {
 
   const [panel, setPanel] = useState<"rename" | "duplicate" | null>(null);
 
-  function handleDelete() {
-    if (window.confirm(`Delete "${displayName}"? This can't be undone.`)) {
-      deleteSavedTrip(trip.id);
-    }
-  }
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   return (
     <div className="flex flex-col border bg-white">
@@ -261,12 +258,34 @@ function TripCard({ trip }: { trip: SavedTrip }) {
               </Button>
             )}
 
-            <Button variant="outline" onClick={handleDelete}>
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmingDelete(true)}
+            >
               Delete
             </Button>
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={isConfirmingDelete}
+        title="Delete this trip?"
+        confirmLabel="Delete trip"
+        destructive
+        onConfirm={() => {
+          setIsConfirmingDelete(false);
+          deleteSavedTrip(trip.id);
+        }}
+        onCancel={() => setIsConfirmingDelete(false)}
+      >
+        <p>
+          <strong className="font-medium text-slate-900">{displayName}</strong>{" "}
+          ({formatDateRange(trip.startDate, trip.endDate)} · {placeCount}{" "}
+          {placeCount === 1 ? "place" : "places"}) will be permanently deleted.
+        </p>
+        <p className="mt-2">This can't be undone.</p>
+      </ConfirmDialog>
     </div>
   );
 }

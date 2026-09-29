@@ -26,6 +26,8 @@ import { Button } from "./ui/button";
 
 import PageBanner from "./page-banner";
 
+import ConfirmDialog from "./confirm-dialog";
+
 import { getTimeOfDay, type TimeOfDay } from "../utils/best-time";
 
 import { formatFullDate, getTripDates } from "../utils/dates";
@@ -207,21 +209,35 @@ function Planner({
       currentLocation.pathname !== nextLocation.pathname,
   );
 
-  useEffect(() => {
-    if (blocker.state !== "blocked") {
+  // New trip dates that would remove activities, waiting for confirmation.
+  const [pendingDates, setPendingDates] = useState<{
+    startDate: string;
+    endDate: string;
+    removedCount: number;
+  } | null>(null);
+
+  function applyTripDates(startDate: string, endDate: string) {
+    setTrip({ cityId: city.id, startDate, endDate });
+
+    setItinerary((current) =>
+      current.filter((item) => item.date >= startDate && item.date <= endDate),
+    );
+
+    setIsEditingTrip(false);
+  }
+
+  function handleTripDatesChange(startDate: string, endDate: string) {
+    const removedCount = itinerary.filter(
+      (item) => item.date < startDate || item.date > endDate,
+    ).length;
+
+    if (removedCount > 0) {
+      setPendingDates({ startDate, endDate, removedCount });
       return;
     }
 
-    if (
-      window.confirm(
-        "This trip isn't saved yet. It's kept as a draft, but planning another trip will replace it. Leave this page?",
-      )
-    ) {
-      blocker.proceed();
-    } else {
-      blocker.reset();
-    }
-  }, [blocker]);
+    applyTripDates(startDate, endDate);
+  }
 
   function handleSaveTrip() {
     if (!trip) {
@@ -491,37 +507,7 @@ function Planner({
             cityName={city.name}
             initialStartDate={trip?.startDate}
             initialEndDate={trip?.endDate}
-            onCreateTrip={(startDate, endDate) => {
-              const affectedItems = itinerary.filter(
-                (item) => item.date < startDate || item.date > endDate,
-              );
-
-              if (affectedItems.length > 0) {
-                const confirmed = window.confirm(
-                  `${affectedItems.length} itinerary ${
-                    affectedItems.length === 1 ? "item is" : "items are"
-                  } outside your new trip dates and will be removed. Continue?`,
-                );
-
-                if (!confirmed) {
-                  return;
-                }
-              }
-
-              setTrip({
-                cityId: city.id,
-                startDate,
-                endDate,
-              });
-
-              setItinerary((current) =>
-                current.filter(
-                  (item) => item.date >= startDate && item.date <= endDate,
-                ),
-              );
-
-              setIsEditingTrip(false);
-            }}
+            onCreateTrip={handleTripDatesChange}
             onCancel={trip ? () => setIsEditingTrip(false) : undefined}
           />
         )}
@@ -700,6 +686,50 @@ function Planner({
           </p>
         )}
       </main>
+
+      <ConfirmDialog
+        open={pendingDates !== null}
+        title="Change your trip dates?"
+        confirmLabel={
+          pendingDates?.removedCount === 1
+            ? "Change dates and remove 1 activity"
+            : `Change dates and remove ${pendingDates?.removedCount ?? 0} activities`
+        }
+        destructive
+        onConfirm={() => {
+          if (pendingDates) {
+            applyTripDates(pendingDates.startDate, pendingDates.endDate);
+          }
+
+          setPendingDates(null);
+        }}
+        onCancel={() => setPendingDates(null)}
+      >
+        {pendingDates && (
+          <p>
+            {pendingDates.removedCount === 1
+              ? "1 activity is"
+              : `${pendingDates.removedCount} activities are`}{" "}
+            planned outside {formatFullDate(pendingDates.startDate)} –{" "}
+            {formatFullDate(pendingDates.endDate)} and will be removed from your
+            itinerary.
+          </p>
+        )}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={blocker.state === "blocked"}
+        title="Leave without saving?"
+        confirmLabel="Leave page"
+        cancelLabel="Stay"
+        onConfirm={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
+      >
+        <p>
+          This trip isn't saved yet. It's kept as a draft, so you can continue
+          it from the home page, but planning another trip will replace it.
+        </p>
+      </ConfirmDialog>
     </>
   );
 }

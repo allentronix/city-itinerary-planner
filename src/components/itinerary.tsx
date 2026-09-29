@@ -15,6 +15,8 @@ import { estimateWalk, formatDistance, hasCoordinates } from "../utils/geo";
 // Leaflet is only downloaded the first time someone opens a map.
 const DayMap = lazy(() => import("./day-map"));
 
+import ConfirmDialog from "./confirm-dialog";
+
 import EditItineraryItem from "./edit-itinerary-item";
 
 import { Button } from "./ui/button";
@@ -105,6 +107,11 @@ function Itinerary({
   // Days whose map is open.
   const [mapDates, setMapDates] = useState<string[]>([]);
 
+  // The activity waiting for the "Remove" confirmation, if any.
+  const [pendingRemoval, setPendingRemoval] = useState<ItineraryItem | null>(
+    null,
+  );
+
   function toggleMap(date: string) {
     setMapDates((open) =>
       open.includes(date)
@@ -169,15 +176,7 @@ function Itinerary({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Remove ${item.place.name} from your itinerary?`,
-                      )
-                    ) {
-                      onRemove(item.id);
-                    }
-                  }}
+                  onClick={() => setPendingRemoval(item)}
                 >
                   Remove
                 </Button>
@@ -300,6 +299,33 @@ function Itinerary({
           </div>
         ),
       )}
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        title="Remove this activity?"
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => {
+          if (pendingRemoval) {
+            onRemove(pendingRemoval.id);
+          }
+
+          setPendingRemoval(null);
+        }}
+        onCancel={() => setPendingRemoval(null)}
+      >
+        {pendingRemoval && (
+          <p>
+            <strong className="font-medium text-slate-900">
+              {pendingRemoval.place.name}
+            </strong>{" "}
+            at {pendingRemoval.startTime} on Day{" "}
+            {tripDates.indexOf(pendingRemoval.date) + 1} (
+            {formatShortDate(pendingRemoval.date)}) will be removed from your
+            itinerary. You can add it again from Places to visit.
+          </p>
+        )}
+      </ConfirmDialog>
     </section>
   );
 }
