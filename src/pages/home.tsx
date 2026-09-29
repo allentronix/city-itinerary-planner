@@ -18,6 +18,13 @@ import { getTripUrl } from "../utils/trip-url";
 const LABEL_CLASS =
   "block text-xs font-medium tracking-wider text-slate-800 uppercase";
 
+// A slow, soft fade and short rise; skipped when the visitor prefers reduced motion.
+function fadeInClass(visible: boolean): string {
+  return `transition-[opacity,transform] duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+    visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
+  }`;
+}
+
 function Home() {
   const navigate = useNavigate();
   const [city, setCity] = useState<CityInfo | null>(null);
@@ -40,7 +47,7 @@ function Home() {
 
   // Popular destinations fade in as they scroll into view.
   const { ref: destinationsRef, inView: destinationsInView } =
-    useInView<HTMLElement>();
+    useInView<HTMLElement>({ rootMargin: "0px 0px -60px 0px" });
 
   function scrollToDestinations() {
     const reduceMotion = window.matchMedia(
@@ -239,30 +246,24 @@ function Home() {
       <section
         id="destinations"
         ref={destinationsRef}
-        className={`mx-auto max-w-6xl px-6 py-16 transition duration-700 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-          destinationsInView
-            ? "translate-y-0 opacity-100"
-            : "translate-y-6 opacity-0"
-        }`}
+        className="mx-auto max-w-6xl px-6 py-16"
       >
-        <h2 className="font-serif text-3xl tracking-tight">
-          Popular destinations
-        </h2>
-        <p className="mt-2 text-slate-600">
-          Hand-picked sights, restaurants and coffee shops to get you started.
-        </p>
+        <div className={fadeInClass(destinationsInView)}>
+          <h2 className="font-serif text-3xl tracking-tight">
+            Popular destinations
+          </h2>
+          <p className="mt-2 text-slate-600">
+            Hand-picked sights, restaurants and coffee shops to get you started.
+          </p>
+        </div>
 
         <ul className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {cities.map((destination, index) => (
             <li
               key={destination.id}
-              // Cards follow one after another as the section fades in.
-              style={{ transitionDelay: `${150 + index * 60}ms` }}
-              className={`transition duration-500 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
-                destinationsInView
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-4 opacity-0"
-              }`}
+              // Cards follow the heading, one after another.
+              style={{ transitionDelay: `${200 + index * 70}ms` }}
+              className={fadeInClass(destinationsInView)}
             >
               <button
                 type="button"
