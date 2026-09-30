@@ -1,4 +1,11 @@
-import type { Place } from "../data/types";
+import type { Place, PlaceCategory } from "../data/types";
+
+export const CATEGORY_LABELS: Record<PlaceCategory, string> = {
+  attraction: "Sight",
+  restaurant: "Restaurant",
+  cafe: "Coffee shop",
+  activity: "Thing to do",
+};
 
 // Restaurants and cafés can be visited once per day; sights and things to do once per trip.
 export function canVisitDaily(place: Place): boolean {

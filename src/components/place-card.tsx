@@ -1,23 +1,18 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import ScheduleFields from "./schedule-fields";
-import type { Place, PlaceCategory, Schedule, Trip } from "../data/types";
+import CustomPlaceForm from "./custom-place-form";
+import type { Place, Schedule, Trip } from "../data/types";
 import { getSuggestedStartTime } from "../utils/best-time";
+import type { CustomPlaceFields } from "../utils/custom-places";
 import { getTripDates } from "../utils/dates";
-import { canVisitDaily } from "../utils/places";
+import { CATEGORY_LABELS, canVisitDaily } from "../utils/places";
 import { findAvailableTime } from "../utils/time";
 
 const DEFAULT_DURATION = 60;
 
 // Same size as the "Plan a trip" button in the navbar.
 const LARGE_BUTTON_CLASS = "h-auto px-5 py-3 text-base";
-
-const CATEGORY_LABELS: Record<PlaceCategory, string> = {
-  attraction: "Sight",
-  restaurant: "Restaurant",
-  cafe: "Coffee shop",
-  activity: "Thing to do",
-};
 
 interface PlaceCardProps {
   place: Place;
@@ -28,6 +23,10 @@ interface PlaceCardProps {
   // Travel time to the next stop that day, estimated from walking distance.
   suggestTravelTime: (schedule: Schedule) => number;
   onAdd: (schedule: Schedule) => string | null;
+  // Only for your own places. Update returns an error message, or null once saved.
+  onUpdatePlace?: (fields: CustomPlaceFields) => string | null;
+  onDeletePlace?: () => void;
+  cityName: string;
 }
 
 function PlaceCard({
@@ -38,9 +37,13 @@ function PlaceCard({
   isTimeAvailable,
   suggestTravelTime,
   onAdd,
+  onUpdatePlace,
+  onDeletePlace,
+  cityName,
 }: PlaceCardProps) {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [error, setError] = useState("");
+  const [isEditingPlace, setIsEditingPlace] = useState(false);
 
   const tripDates = getTripDates(trip.startDate, trip.endDate);
 
@@ -102,15 +105,52 @@ function PlaceCard({
       ? { ...schedule, date: availableDates[0] }
       : schedule;
 
+  if (isEditingPlace && onUpdatePlace) {
+    return (
+      <div className="border border-amber-300 bg-white p-5">
+        <p className="mb-4 font-serif text-xl">Edit your place</p>
+
+        <CustomPlaceForm
+          cityName={cityName}
+          place={place}
+          onCancel={() => setIsEditingPlace(false)}
+          onSave={(fields) => {
+            const errorMessage = onUpdatePlace(fields);
+
+            if (!errorMessage) {
+              setIsEditingPlace(false);
+            }
+
+            return errorMessage;
+          }}
+        />
+      </div>
+    );
+  }
+
+  const isCustom = place.source === "custom";
+
   return (
-    <div className="border bg-white p-5">
-      <p className="text-xs font-medium tracking-wider text-emerald-700 uppercase">
-        {CATEGORY_LABELS[place.category]}
-      </p>
+    <div
+      className={`border bg-white p-5 ${isCustom ? "border-l-4 border-l-amber-400" : ""}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium tracking-wider text-emerald-700 uppercase">
+          {CATEGORY_LABELS[place.category]}
+        </p>
+
+        {isCustom && (
+          <span className="bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+            Your place
+          </span>
+        )}
+      </div>
 
       <h3 className="mt-1 font-serif text-xl">{place.name}</h3>
 
-      <p className="mt-2 text-sm text-slate-600">{place.description}</p>
+      {place.description && (
+        <p className="mt-2 text-sm text-slate-600">{place.description}</p>
+      )}
 
       <p className="mt-3 text-sm text-slate-500">Best time: {place.bestTime}</p>
 
@@ -128,6 +168,26 @@ function PlaceCard({
         <p className="mt-1 text-sm text-slate-500">
           Planned for Day {bookedDayNumbers.join(", Day ")}
         </p>
+      )}
+
+      {isCustom && (onUpdatePlace || onDeletePlace) && (
+        <div className="mt-3 flex gap-2">
+          {onUpdatePlace && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsEditingPlace(true)}
+            >
+              Edit place
+            </Button>
+          )}
+
+          {onDeletePlace && (
+            <Button size="sm" variant="outline" onClick={onDeletePlace}>
+              Delete
+            </Button>
+          )}
+        </div>
       )}
 
       {isFullyBooked ? (

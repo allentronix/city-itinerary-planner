@@ -19,6 +19,11 @@ const BEST_TIMES: Record<string, BestTimeInfo> = {
   "late evening": { startTime: "21:00", timeOfDay: "evening" },
 };
 
+// The choices offered when adding your own place, e.g. "Late morning".
+export const BEST_TIME_OPTIONS = Object.keys(BEST_TIMES).map(
+  (key) => key.charAt(0).toUpperCase() + key.slice(1),
+);
+
 const DEFAULT_BEST_TIME: BestTimeInfo = {
   startTime: "09:00",
   timeOfDay: "morning",

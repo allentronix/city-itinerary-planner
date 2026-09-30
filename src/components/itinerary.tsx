@@ -161,9 +161,11 @@ function Itinerary({ itinerary, trip, actions }: ItineraryProps) {
             <div className="border-l pl-4">
               <p className="font-serif text-lg">{item.place.name}</p>
 
-              <p className="mt-1 text-sm text-gray-600">
-                {item.place.description}
-              </p>
+              {item.place.description && (
+                <p className="mt-1 text-sm text-gray-600">
+                  {item.place.description}
+                </p>
+              )}
 
               <p className="mt-2 text-xs text-gray-500">
                 Best time: {item.place.bestTime}

@@ -12,6 +12,9 @@ export interface Place {
   lon?: number;
   openingHours?: string;
   website?: string;
+  // Added by the traveller and kept in this browser. Has the same shape as
+  // other places, so it can later be sent in as a suggestion for everyone.
+  source?: "custom";
 }
 
 // The basics of a city: what city search returns and saved trips keep a copy of.

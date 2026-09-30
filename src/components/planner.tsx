@@ -18,6 +18,8 @@ import type {
 
 import PlaceCard from "./place-card";
 
+import CustomPlaceForm from "./custom-place-form";
+
 import Itinerary from "./itinerary";
 
 import TripForm from "./trip-form";
@@ -51,6 +53,15 @@ import { useCityPlaces } from "../hooks/use-city-places";
 
 import { useCityPhoto } from "../hooks/use-city-photo";
 
+import { useCustomPlaces } from "../hooks/use-custom-places";
+
+import {
+  addCustomPlace,
+  deleteCustomPlace,
+  updateCustomPlace,
+  type CustomPlaceFields,
+} from "../utils/custom-places";
+
 import {
   isWithinSameDay,
   timeToMinutes,
@@ -59,11 +70,12 @@ import {
 
 import { estimateWalk } from "../utils/geo";
 
-type PlaceFilter = "all" | "not-added" | PlaceCategory | TimeOfDay;
+type PlaceFilter = "all" | "not-added" | "custom" | PlaceCategory | TimeOfDay;
 
 const PLACE_FILTERS: { value: PlaceFilter; label: string }[] = [
   { value: "all", label: "All places" },
   { value: "not-added", label: "Not added yet" },
+  { value: "custom", label: "Your places" },
   { value: "attraction", label: "Sights" },
   { value: "restaurant", label: "Restaurants" },
   { value: "cafe", label: "Coffee shops" },
@@ -79,6 +91,8 @@ const FILTER_PLACE_TYPES: Partial<Record<PlaceFilter, PlaceType[]>> = {
   restaurant: ["restaurants"],
   cafe: ["cafes"],
   activity: ["activities"],
+  // Your own places are always there; nothing to load.
+  custom: [],
 };
 
 const PLACE_TYPE_LABELS: Record<PlaceType, string> = {
@@ -130,6 +144,14 @@ function Planner({
     entries: placeEntries,
     load: loadPlaces,
   } = useCityPlaces(city);
+
+  const customPlaces = useCustomPlaces(city.id);
+
+  const [isAddingPlace, setIsAddingPlace] = useState(false);
+
+  // One of your places waiting for the "Delete" confirmation, if any.
+  const [pendingPlaceDeletion, setPendingPlaceDeletion] =
+    useState<Place | null>(null);
 
   const isApiCity = city.source === "api";
 
@@ -317,6 +339,10 @@ function Planner({
       return !isPlaceAdded(place.id);
     }
 
+    if (placeFilter === "custom") {
+      return place.source === "custom";
+    }
+
     if (
       placeFilter === "attraction" ||
       placeFilter === "restaurant" ||
@@ -440,7 +466,45 @@ function Planner({
     return null;
   }
 
-  const visiblePlaces = places.filter(matchesFilter);
+  function handleAddCustomPlace(fields: CustomPlaceFields): string | null {
+    const place = addCustomPlace(city.id, fields);
+
+    if (!place) {
+      return "Couldn't save your place. Your browser may be blocking storage.";
+    }
+
+    setIsAddingPlace(false);
+
+    // Make sure the new place is in view.
+    if (!matchesFilter(place)) {
+      setPlaceFilter("all");
+    }
+
+    return null;
+  }
+
+  function handleUpdateCustomPlace(
+    place: Place,
+    fields: CustomPlaceFields,
+  ): string | null {
+    const updated = updateCustomPlace(city.id, place, fields);
+
+    if (!updated) {
+      return "Couldn't save your changes. Your browser may be blocking storage.";
+    }
+
+    // Activities already planned show the new details too.
+    setItinerary((current) =>
+      current.map((item) =>
+        item.place.id === place.id ? { ...item, place: updated } : item,
+      ),
+    );
+
+    return null;
+  }
+
+  // Your own places come first.
+  const visiblePlaces = [...customPlaces, ...places].filter(matchesFilter);
 
   // Which kinds of place the current filter shows, and where each stands.
   const filteredTypes: PlaceType[] =
@@ -526,7 +590,16 @@ function Planner({
                   Places to visit
                 </h2>
 
-                <div className="flex items-end gap-2">
+                <div className="flex flex-wrap items-end gap-2">
+                  <Button
+                    variant="outline"
+                    aria-expanded={isAddingPlace}
+                    onClick={() => setIsAddingPlace((open) => !open)}
+                    className="h-auto px-4 py-2"
+                  >
+                    + Add your own place
+                  </Button>
+
                   {/* A shortcut to the "Things to do" filter; press again for all places. */}
                   <Button
                     variant="outline"
@@ -570,6 +643,22 @@ function Planner({
                 </div>
               </div>
 
+              {isAddingPlace && (
+                <div className="mt-6 border border-amber-300 bg-white p-5">
+                  <p className="font-serif text-xl">Add your own place</p>
+                  <p className="mt-1 mb-4 text-sm text-slate-500">
+                    Somewhere not on the list? Add it here. It's saved in this
+                    browser and shows up in every trip to {city.name}.
+                  </p>
+
+                  <CustomPlaceForm
+                    cityName={city.name}
+                    onSave={handleAddCustomPlace}
+                    onCancel={() => setIsAddingPlace(false)}
+                  />
+                </div>
+              )}
+
               {loadingTypes.length > 0 && (
                 <p className="mt-6 text-sm text-slate-500">
                   Loading{" "}
@@ -607,7 +696,9 @@ function Planner({
                 loadingTypes.length === 0 &&
                 failedTypes.length === 0 && (
                   <p className="mt-6 border border-dashed p-4 text-sm text-slate-500">
-                    No places match this filter.
+                    {placeFilter === "custom"
+                      ? "You haven't added any places yet. Use Add your own place to add one."
+                      : "No places match this filter."}
                   </p>
                 )
               ) : (
@@ -624,6 +715,12 @@ function Planner({
                         suggestTravelTime(place, schedule)
                       }
                       onAdd={(schedule) => handleAddPlace(place, schedule)}
+                      cityName={city.name}
+                      {...(place.source === "custom" && {
+                        onUpdatePlace: (fields: CustomPlaceFields) =>
+                          handleUpdateCustomPlace(place, fields),
+                        onDeletePlace: () => setPendingPlaceDeletion(place),
+                      })}
                     />
                   ))}
                 </div>
@@ -777,6 +874,31 @@ function Planner({
             planned outside {formatFullDate(pendingDates.startDate)} –{" "}
             {formatFullDate(pendingDates.endDate)} and will be removed from your
             itinerary.
+          </p>
+        )}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={pendingPlaceDeletion !== null}
+        title="Delete your place?"
+        confirmLabel="Delete place"
+        destructive
+        onConfirm={() => {
+          if (pendingPlaceDeletion) {
+            deleteCustomPlace(city.id, pendingPlaceDeletion.id);
+          }
+
+          setPendingPlaceDeletion(null);
+        }}
+        onCancel={() => setPendingPlaceDeletion(null)}
+      >
+        {pendingPlaceDeletion && (
+          <p>
+            <strong className="font-medium text-slate-900">
+              {pendingPlaceDeletion.name}
+            </strong>{" "}
+            will be removed from your places in {city.name}. Activities you've
+            already planned there stay in your itineraries.
           </p>
         )}
       </ConfirmDialog>
