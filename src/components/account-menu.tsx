@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/use-auth";
-import { signIn, signOut, type AuthState } from "../utils/auth";
-import { Button } from "./ui/button";
+import { getSyncMessage, signOut } from "../utils/auth";
+import { cn } from "../lib/utils";
+import { Button, buttonVariants } from "./ui/button";
 
 interface AccountMenuProps {
   // "desktop" sits in the navbar row; "mobile" fills the phone menu.
@@ -10,21 +12,10 @@ interface AccountMenuProps {
   onDone?: () => void;
 }
 
-function getSyncMessage(auth: Extract<AuthState, { status: "signed-in" }>) {
-  if (auth.hasSyncError) {
-    return "Couldn't sync. Your changes are kept on this device for now.";
-  }
-
-  return auth.isSyncing
-    ? "Syncing your trips…"
-    : "Your trips sync across your devices.";
-}
-
 function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
   const auth = useAuth();
+  const { pathname } = useLocation();
 
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [error, setError] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -56,20 +47,6 @@ function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
     };
   }, [isOpen]);
 
-  async function handleSignIn() {
-    setIsSigningIn(true);
-    setError("");
-
-    const message = await signIn();
-
-    setIsSigningIn(false);
-    setError(message ?? "");
-
-    if (!message) {
-      onDone?.();
-    }
-  }
-
   async function handleSignOut() {
     setIsOpen(false);
     await signOut();
@@ -84,6 +61,9 @@ function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
   const textClass = isOverHero
     ? "font-medium text-white/80 hover:text-white"
     : "font-medium text-slate-500 hover:text-slate-900";
+
+  // The sign-in page sends people back here afterwards.
+  const signInState = { from: pathname };
 
   if (layout === "mobile") {
     return (
@@ -109,18 +89,21 @@ function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
           </>
         ) : (
           <>
-            <Button
-              variant="outline"
-              className="h-auto w-full py-3"
-              disabled={isSigningIn}
-              onClick={handleSignIn}
+            <Link
+              to="/sign-in"
+              state={signInState}
+              onClick={onDone}
+              // cn() resolves the base and outline border classes, as <Button> does.
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-auto w-full py-3",
+              )}
             >
-              {isSigningIn ? "Signing in…" : "Sign in with Google"}
-            </Button>
+              Sign in
+            </Link>
             <p className="mt-2 text-xs text-slate-500">
               Keep your trips on all your devices.
             </p>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           </>
         )}
       </div>
@@ -129,25 +112,15 @@ function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
 
   if (auth.status === "signed-out") {
     return (
-      <div className="relative">
-        <button
-          type="button"
-          className={textClass}
-          disabled={isSigningIn}
-          onClick={handleSignIn}
-        >
-          {isSigningIn ? "Signing in…" : "Sign in"}
-        </button>
-
-        {error && (
-          <p
-            role="alert"
-            className="absolute top-full right-0 mt-3 w-64 border border-red-200 bg-white p-3 text-sm text-red-700 shadow-lg"
-          >
-            {error}
-          </p>
-        )}
-      </div>
+      <NavLink
+        to="/sign-in"
+        state={signInState}
+        className={({ isActive }) =>
+          isActive && !isOverHero ? "font-medium text-slate-900" : textClass
+        }
+      >
+        Sign in
+      </NavLink>
     );
   }
 

@@ -65,6 +65,18 @@ export function rememberSignIn(value: RememberedSignIn | null) {
   }
 }
 
+export function getSyncMessage(
+  auth: Extract<AuthState, { status: "signed-in" }>,
+): string {
+  if (auth.hasSyncError) {
+    return "Couldn't sync. Your changes are kept on this device for now.";
+  }
+
+  return auth.isSyncing
+    ? "Syncing your trips…"
+    : "Your trips sync across your devices.";
+}
+
 export function getAuthState(): AuthState {
   return state;
 }

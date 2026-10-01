@@ -5,6 +5,7 @@ import DateRangePicker from "../components/date-range-picker";
 import PageBanner from "../components/page-banner";
 import { Button, buttonVariants } from "../components/ui/button";
 import { cn } from "../lib/utils";
+import { useAuth } from "../hooks/use-auth";
 import { useCityPhoto } from "../hooks/use-city-photo";
 import { useSavedTrips } from "../hooks/use-saved-trips";
 import {
@@ -338,6 +339,7 @@ function TripSection({ title, trips }: { title: string; trips: SavedTrip[] }) {
 
 function TripsPage() {
   const trips = useSavedTrips();
+  const auth = useAuth();
 
   // Soonest upcoming trip first; most recent past trip first.
   const upcoming = trips
@@ -353,6 +355,22 @@ function TripsPage() {
       <PageBanner eyebrow="Your plans" title="My trips" />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
+        {auth.status === "signed-out" && trips.length > 0 && (
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border bg-white p-4">
+            <p className="text-sm text-slate-600">
+              These trips are saved in this browser only. Sign in to see them on
+              your other devices.
+            </p>
+            <Link
+              to="/sign-in"
+              state={{ from: "/trips" }}
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
+
         {trips.length === 0 ? (
           <div className="border border-dashed bg-white p-10 text-center">
             <h2 className="font-serif text-2xl">No saved trips yet</h2>
