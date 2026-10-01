@@ -121,3 +121,14 @@ export async function signOut() {
 
   await session.signOut();
 }
+
+// "deleted", "cancelled", or an error message.
+export async function deleteAccount(): Promise<string> {
+  try {
+    const session = await loadSession();
+
+    return await session.deleteAccount();
+  } catch {
+    return "Couldn't delete your account. Please try again.";
+  }
+}

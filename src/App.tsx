@@ -6,6 +6,7 @@ import TripsPage from "./pages/trips";
 import SavedTripPage from "./pages/saved-trip";
 import TripViewPage from "./pages/trip-view";
 import SignInPage from "./pages/sign-in";
+import PrivacyPage from "./pages/privacy";
 import NotFound from "./pages/not-found";
 import Navbar from "./components/navbar";
 
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/about", element: <About /> },
       { path: "/sign-in", element: <SignInPage /> },
+      { path: "/privacy", element: <PrivacyPage /> },
       { path: "/city/:id", element: <CityPage /> },
       { path: "/trips", element: <TripsPage /> },
       // Open: a read-only view. Edit: the full planner.

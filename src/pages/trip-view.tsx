@@ -13,6 +13,7 @@ import {
   getTripDisplayName,
   toItinerary,
 } from "../utils/saved-trips";
+import { getCityCoordinates } from "../utils/weather";
 import NotFound from "./not-found";
 import TripLoading from "./trip-loading";
 
@@ -104,6 +105,7 @@ function TripViewPage() {
         ) : (
           <Itinerary
             itinerary={itinerary}
+            location={getCityCoordinates(city)}
             trip={{
               cityId: savedTrip.cityId,
               startDate: savedTrip.startDate,

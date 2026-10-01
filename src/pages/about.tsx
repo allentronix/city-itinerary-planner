@@ -54,6 +54,14 @@ function About() {
         >
           Start planning
         </Link>
+
+        <p className="mt-10 text-sm text-slate-500">
+          No ads or tracking.{" "}
+          <Link to="/privacy" className="underline hover:text-slate-900">
+            Read what ItiPlanner stores
+          </Link>
+          .
+        </p>
       </main>
     </>
   );

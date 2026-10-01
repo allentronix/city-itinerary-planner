@@ -70,6 +70,8 @@ import {
 
 import { estimateWalk } from "../utils/geo";
 
+import { getCityCoordinates } from "../utils/weather";
+
 type PlaceFilter = "all" | "not-added" | "custom" | PlaceCategory | TimeOfDay;
 
 const PLACE_FILTERS: { value: PlaceFilter; label: string }[] = [
@@ -780,6 +782,7 @@ function Planner({
               <Itinerary
                 itinerary={itinerary}
                 trip={trip}
+                location={getCityCoordinates(city)}
                 actions={{
                   isTimeAvailable,
                   getUnavailableDates: getUnavailableDatesFor,

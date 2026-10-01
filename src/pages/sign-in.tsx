@@ -185,6 +185,12 @@ function SignInPage() {
                   Continue without signing in
                 </Link>
               </p>
+
+              <p className="mt-3 text-sm text-slate-500">
+                <Link to="/privacy" className="underline">
+                  What's stored and how to delete it
+                </Link>
+              </p>
             </>
           )}
         </div>

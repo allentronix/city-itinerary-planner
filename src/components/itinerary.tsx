@@ -12,6 +12,12 @@ import { addMinutesToTime, formatDuration, timeToMinutes } from "../utils/time";
 
 import { estimateWalk, formatDistance, hasCoordinates } from "../utils/geo";
 
+import { describeWeather, type Coordinates } from "../utils/weather";
+
+import { useWeather } from "../hooks/use-weather";
+
+import ForecastStrip from "./forecast-strip";
+
 // Leaflet is only downloaded the first time someone opens a map.
 const DayMap = lazy(() => import("./day-map"));
 
@@ -37,6 +43,8 @@ interface ItineraryProps {
   trip: Trip;
   // Without actions the itinerary is read-only: no Edit, note or Remove buttons.
   actions?: ItineraryActions;
+  // Where the trip is, for the weather forecast.
+  location?: Coordinates | null;
 }
 
 // A planned day is shown in full; a run of empty days is collapsed into one line.
@@ -103,7 +111,12 @@ function EmptyDays({
   );
 }
 
-function Itinerary({ itinerary, trip, actions }: ItineraryProps) {
+function Itinerary({
+  itinerary,
+  trip,
+  actions,
+  location = null,
+}: ItineraryProps) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   // Days whose map is open.
@@ -126,6 +139,8 @@ function Itinerary({ itinerary, trip, actions }: ItineraryProps) {
   }
 
   const tripDates = getTripDates(trip.startDate, trip.endDate);
+
+  const weather = useWeather(location, trip.startDate, trip.endDate);
 
   const sections = groupIntoSections(tripDates, itinerary);
 
@@ -287,6 +302,8 @@ function Itinerary({ itinerary, trip, actions }: ItineraryProps) {
         {itinerary.length === 1 ? "place" : "places"}
       </p>
 
+      <ForecastStrip weather={weather} tripDates={tripDates} />
+
       {sections.map((section) =>
         section.kind === "empty" ? (
           <EmptyDays
@@ -304,6 +321,12 @@ function Itinerary({ itinerary, trip, actions }: ItineraryProps) {
                   {formatWeekdayDate(section.date)} · {section.items.length}{" "}
                   {section.items.length === 1 ? "place" : "places"} planned
                 </p>
+
+                {weather.status === "ready" && weather.byDate[section.date] && (
+                  <p className="mt-0.5 text-sm text-slate-600">
+                    {describeWeather(weather.byDate[section.date])}
+                  </p>
+                )}
               </div>
 
               {section.items.some((item) => hasCoordinates(item.place)) && (

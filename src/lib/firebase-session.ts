@@ -1,14 +1,17 @@
 import { initializeApp } from "firebase/app";
 import {
+  deleteUser,
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithPopup,
   signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
 import {
+  clearIndexedDbPersistence,
   collection,
   deleteDoc,
   doc,
@@ -18,6 +21,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   setDoc,
+  terminate,
   writeBatch,
 } from "firebase/firestore";
 import type { Place } from "../data/types";
@@ -30,6 +34,7 @@ import {
   type AuthUser,
 } from "../utils/auth";
 import { setCloudSink } from "../utils/cloud-sync";
+import { clearDraft } from "../utils/draft-trip";
 import {
   loadCustomPlaces,
   replaceCustomPlaces,
@@ -253,12 +258,36 @@ export function start() {
   });
 }
 
+function getGoogleProvider(): GoogleAuthProvider {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  return provider;
+}
+
+function isPopupClosed(code: string | undefined): boolean {
+  return (
+    code === "auth/popup-closed-by-user" ||
+    code === "auth/cancelled-popup-request"
+  );
+}
+
+// Removes Firestore's offline copy of the account from this browser.
+// Firestore can't be used again on this page afterwards, so callers reload.
+async function clearOfflineCopy() {
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch {
+    // Another ItiPlanner tab still has it open; it's cleared on a later sign-out.
+  }
+}
+
 // Returns an error message, or null once signed in (or the popup was closed).
 export async function signIn(): Promise<string | null> {
   start();
 
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
+  const provider = getGoogleProvider();
 
   try {
     await signInWithPopup(auth, provider);
@@ -266,10 +295,7 @@ export async function signIn(): Promise<string | null> {
   } catch (error) {
     const code = (error as { code?: string }).code;
 
-    if (
-      code === "auth/popup-closed-by-user" ||
-      code === "auth/cancelled-popup-request"
-    ) {
+    if (isPopupClosed(code)) {
       return null;
     }
 
@@ -289,6 +315,74 @@ export async function signIn(): Promise<string | null> {
   }
 }
 
+// Signs out and removes the account's trips from this browser. Reloads the app.
 export async function signOut() {
   await firebaseSignOut(auth);
+  handleSignedOut();
+  await clearOfflineCopy();
+  window.location.assign("/");
+}
+
+// Deletes the account with all its trips and places, everywhere. Returns
+// "deleted", "cancelled" (the confirmation popup was closed) or an error message.
+export async function deleteAccount(): Promise<string> {
+  const user = auth.currentUser;
+
+  if (!user) {
+    return "You're not signed in.";
+  }
+
+  // Firebase only deletes accounts after a recent sign-in, so Google asks the
+  // person to confirm it's them. It also stops a borrowed laptop deleting it.
+  try {
+    await reauthenticateWithPopup(user, getGoogleProvider());
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+
+    if (isPopupClosed(code)) {
+      return "cancelled";
+    }
+
+    if (code === "auth/user-mismatch") {
+      return "That's a different Google account. Choose the one you're signed in with.";
+    }
+
+    console.error("Couldn't confirm the account:", code ?? error);
+    return "Couldn't confirm it's you. Please try again.";
+  }
+
+  // Stop syncing first, so the deletions don't bounce back into this browser.
+  stopSync?.();
+  stopSync = null;
+  setCloudSink(null);
+
+  try {
+    const snapshots = await Promise.all([
+      getDocs(tripsRef(user.uid)),
+      getDocs(placesRef(user.uid)),
+    ]);
+    const refs = snapshots.flatMap((snapshot) =>
+      snapshot.docs.map((stored) => stored.ref),
+    );
+
+    // A batch holds at most 500 changes.
+    for (let index = 0; index < refs.length; index += 500) {
+      const batch = writeBatch(db);
+      refs.slice(index, index + 500).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+
+    await deleteUser(user);
+  } catch (error) {
+    console.error("Couldn't delete the account:", error);
+    // Still signed in: carry on syncing whatever is left.
+    void handleSignedIn(user);
+    return "Couldn't delete your account. Please try again.";
+  }
+
+  handleSignedOut();
+  clearDraft();
+  await clearOfflineCopy();
+
+  return "deleted";
 }

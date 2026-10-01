@@ -86,6 +86,13 @@ function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
             >
               Sign out
             </Button>
+            <Link
+              to="/privacy"
+              onClick={onDone}
+              className="mt-3 block text-center text-sm text-slate-500 underline"
+            >
+              Privacy and your data
+            </Link>
           </>
         ) : (
           <>
@@ -161,6 +168,13 @@ function AccountMenu({ layout, isOverHero = false, onDone }: AccountMenuProps) {
           >
             Sign out
           </Button>
+          <Link
+            to="/privacy"
+            onClick={() => setIsOpen(false)}
+            className="mt-3 block text-center text-sm text-slate-500 underline hover:text-slate-900"
+          >
+            Privacy and your data
+          </Link>
         </div>
       )}
     </div>
