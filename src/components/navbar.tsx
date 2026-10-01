@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/use-auth";
 import { useSavedTrips } from "../hooks/use-saved-trips";
 import AccountMenu from "./account-menu";
 
@@ -20,6 +21,10 @@ function Navbar() {
 
   // On the home page the navbar sits on top of the hero photo.
   const isOverHero = pathname === "/";
+
+  // The home page already has the trip search, so its main button is Sign in.
+  const authStatus = useAuth().status;
+  const showsHomeSignIn = isOverHero && authStatus === "signed-out";
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -90,19 +95,27 @@ function Navbar() {
             About
           </NavLink>
 
-          <AccountMenu layout="desktop" isOverHero={isOverHero} />
+          {showsHomeSignIn ? (
+            <Link
+              to="/sign-in"
+              state={{ from: "/" }}
+              className="bg-white px-5 py-3 font-medium text-slate-900 hover:bg-white/90"
+            >
+              Sign in
+            </Link>
+          ) : (
+            <AccountMenu layout="desktop" isOverHero={isOverHero} />
+          )}
 
-          <Link
-            to="/"
-            onClick={focusCityField}
-            className={`px-5 py-3 font-medium ${
-              isOverHero
-                ? "bg-white text-slate-900 hover:bg-white/90"
-                : "bg-slate-900 text-white hover:bg-slate-800"
-            }`}
-          >
-            Plan a trip
-          </Link>
+          {!isOverHero && (
+            <Link
+              to="/"
+              onClick={focusCityField}
+              className="bg-slate-900 px-5 py-3 font-medium text-white hover:bg-slate-800"
+            >
+              Plan a trip
+            </Link>
+          )}
         </div>
 
         <button
@@ -139,18 +152,20 @@ function Navbar() {
 
           <AccountMenu layout="mobile" onDone={closeMenu} />
 
-          <div className="px-6 pt-2 pb-5">
-            <Link
-              to="/"
-              onClick={() => {
-                closeMenu();
-                focusCityField();
-              }}
-              className="block bg-slate-900 px-5 py-3 text-center font-medium text-white"
-            >
-              Plan a trip
-            </Link>
-          </div>
+          {!isOverHero && (
+            <div className="px-6 pt-2 pb-5">
+              <Link
+                to="/"
+                onClick={() => {
+                  closeMenu();
+                  focusCityField();
+                }}
+                className="block bg-slate-900 px-5 py-3 text-center font-medium text-white"
+              >
+                Plan a trip
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </nav>
