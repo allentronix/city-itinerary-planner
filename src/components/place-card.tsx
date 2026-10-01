@@ -20,8 +20,6 @@ interface PlaceCardProps {
   bookedDates: string[];
   unavailableDates: string[];
   isTimeAvailable: (schedule: Schedule) => boolean;
-  // Travel time to the next stop that day, estimated from walking distance.
-  suggestTravelTime: (schedule: Schedule) => number;
   onAdd: (schedule: Schedule) => string | null;
   // Only for your own places. Update returns an error message, or null once saved.
   onUpdatePlace?: (fields: CustomPlaceFields) => string | null;
@@ -35,7 +33,6 @@ function PlaceCard({
   bookedDates,
   unavailableDates,
   isTimeAvailable,
-  suggestTravelTime,
   onAdd,
   onUpdatePlace,
   onDeletePlace,
@@ -71,13 +68,6 @@ function PlaceCard({
     draft.startTime = findAvailableTime(preferredStartTime, (startTime) =>
       isTimeAvailable({ ...draft, startTime }),
     );
-
-    // Pre-fill the walk to the next stop, unless that would cause a clash.
-    const travelTime = suggestTravelTime(draft);
-
-    if (isTimeAvailable({ ...draft, travelTime })) {
-      draft.travelTime = travelTime;
-    }
 
     setSchedule(draft);
     setError("");

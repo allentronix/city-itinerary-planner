@@ -8,9 +8,9 @@ import {
   getTripDates,
 } from "../utils/dates";
 
-import { addMinutesToTime, formatDuration, timeToMinutes } from "../utils/time";
+import { addMinutesToTime, timeToMinutes } from "../utils/time";
 
-import { estimateWalk, formatDistance, hasCoordinates } from "../utils/geo";
+import { hasCoordinates } from "../utils/geo";
 
 import { describeWeather, type Coordinates } from "../utils/weather";
 
@@ -25,6 +25,8 @@ import ConfirmDialog from "./confirm-dialog";
 
 import NoteEditor from "./note-editor";
 
+import TravelConnector from "./travel-connector";
+
 import EditItineraryItem from "./edit-itinerary-item";
 
 import { Button } from "./ui/button";
@@ -36,6 +38,8 @@ export interface ItineraryActions {
   onEdit: (item: ItineraryItem, schedule: Schedule) => string | null;
   // An empty note removes it.
   onNoteChange: (itemId: string, note: string) => void;
+  // Travel time to the next stop, set by hand; 0 goes back to the estimate.
+  onTravelTimeChange: (itemId: string, minutes: number) => void;
 }
 
 interface ItineraryProps {
@@ -51,10 +55,6 @@ interface ItineraryProps {
 type DaySection =
   | { kind: "planned"; date: string; dayNumber: number; items: ItineraryItem[] }
   | { kind: "empty"; dates: string[]; firstDayNumber: number };
-
-function getTimeDifference(startTime: string, endTime: string): number {
-  return timeToMinutes(endTime) - timeToMinutes(startTime);
-}
 
 function groupIntoSections(
   tripDates: string[],
@@ -150,16 +150,6 @@ function Itinerary({
 
   function renderItem(item: ItineraryItem, nextItem?: ItineraryItem) {
     const endTime = addMinutesToTime(item.startTime, item.duration);
-
-    // Estimated walk to the next stop (places from search have coordinates).
-    const walk = nextItem ? estimateWalk(item.place, nextItem.place) : null;
-    const gapToNext = nextItem
-      ? getTimeDifference(endTime, nextItem.startTime)
-      : 0;
-
-    const freeTime = nextItem
-      ? getTimeDifference(endTime, nextItem.startTime) - item.travelTime
-      : 0;
 
     return (
       <div key={item.id}>
@@ -264,29 +254,15 @@ function Itinerary({
           )}
         </div>
 
-        {nextItem && item.travelTime > 0 && (
-          <p className="py-2 text-center text-xs text-gray-400">
-            ↓ {formatDuration(item.travelTime)} travel to next place
-          </p>
-        )}
-
-        {walk &&
-          (walk.minutes > gapToNext ? (
-            <p className="py-2 text-center text-xs text-amber-700">
-              ~{formatDuration(walk.minutes)} walk ({formatDistance(walk.km)}),
-              but only {formatDuration(Math.max(gapToNext, 0))} until{" "}
-              {nextItem?.place.name}
-            </p>
-          ) : (
-            <p className="py-2 text-center text-xs text-gray-400">
-              ~{formatDuration(walk.minutes)} walk · {formatDistance(walk.km)}
-            </p>
-          ))}
-
-        {nextItem && freeTime > 0 && (
-          <p className="py-2 text-center text-xs text-gray-400">
-            · {formatDuration(freeTime)} free time
-          </p>
+        {nextItem && (
+          <TravelConnector
+            from={item}
+            to={nextItem}
+            onTravelTimeChange={
+              actions &&
+              ((minutes) => actions.onTravelTimeChange(item.id, minutes))
+            }
+          />
         )}
       </div>
     );

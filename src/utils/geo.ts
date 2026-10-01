@@ -46,6 +46,74 @@ export function estimateWalk(from: Place, to: Place): WalkEstimate | null {
   };
 }
 
+// Beyond this, people usually take transport rather than walk.
+const LONGEST_WALK_MINUTES = 25;
+// Door to door by metro, bus or taxi in a city: getting to a stop or waiting,
+// then a typical average speed.
+const TRANSIT_OVERHEAD_MINUTES = 8;
+const TRANSIT_SPEED_KM_PER_HOUR = 20;
+
+export interface TravelEstimate {
+  mode: "walk" | "transit";
+  minutes: number;
+  km: number;
+}
+
+// How long getting from one place to the next probably takes: a walk when
+// it's short, transit or a taxi when it isn't. Null without coordinates.
+export function estimateTravel(from: Place, to: Place): TravelEstimate | null {
+  const walk = estimateWalk(from, to);
+
+  if (!walk) {
+    return null;
+  }
+
+  if (walk.minutes <= LONGEST_WALK_MINUTES) {
+    return { mode: "walk", ...walk };
+  }
+
+  return {
+    mode: "transit",
+    km: walk.km,
+    minutes: Math.round(
+      TRANSIT_OVERHEAD_MINUTES + (walk.km / TRANSIT_SPEED_KM_PER_HOUR) * 60,
+    ),
+  };
+}
+
+// Where a place is, as Google Maps understands it: coordinates, or the
+// address for your own places.
+function toMapsLocation(place: Place): string | null {
+  if (hasCoordinates(place)) {
+    return `${place.lat},${place.lon}`;
+  }
+
+  return place.address ? `${place.name}, ${place.address}` : null;
+}
+
+// Google Maps directions between two places (opens the app on phones).
+export function getDirectionsUrl(
+  from: Place,
+  to: Place,
+  mode: TravelEstimate["mode"] = "walk",
+): string | null {
+  const origin = toMapsLocation(from);
+  const destination = toMapsLocation(to);
+
+  if (!origin || !destination) {
+    return null;
+  }
+
+  const params = new URLSearchParams({
+    api: "1",
+    origin,
+    destination,
+    travelmode: mode === "walk" ? "walking" : "transit",
+  });
+
+  return `https://www.google.com/maps/dir/?${params}`;
+}
+
 export function formatDistance(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }

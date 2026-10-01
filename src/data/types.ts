@@ -41,6 +41,8 @@ export interface Schedule {
   date: string;
   startTime: string;
   duration: number;
+  // Minutes to reach the next stop, set by hand; 0 means use the estimate
+  // from the places' locations (or none, when they have no coordinates).
   travelTime: number;
 }
 

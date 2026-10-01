@@ -62,13 +62,7 @@ import {
   type CustomPlaceFields,
 } from "../utils/custom-places";
 
-import {
-  isWithinSameDay,
-  timeToMinutes,
-  toTravelTimeOption,
-} from "../utils/time";
-
-import { estimateWalk } from "../utils/geo";
+import { isWithinSameDay, timeToMinutes } from "../utils/time";
 
 import { getCityCoordinates } from "../utils/weather";
 
@@ -363,7 +357,8 @@ function Planner({
   ): ItineraryItem | null {
     const newStart = timeToMinutes(schedule.startTime);
 
-    const newEnd = newStart + schedule.duration + schedule.travelTime;
+    // Travel between stops is shown as a warning, not blocked.
+    const newEnd = newStart + schedule.duration;
 
     const conflict = itinerary.find((item) => {
       if (item.id === excludeItemId) {
@@ -376,7 +371,7 @@ function Planner({
 
       const existingStart = timeToMinutes(item.startTime);
 
-      const existingEnd = existingStart + item.duration + item.travelTime;
+      const existingEnd = existingStart + item.duration;
 
       return newStart < existingEnd && newEnd > existingStart;
     });
@@ -388,13 +383,8 @@ function Planner({
     schedule: Schedule,
     excludeItemId?: string,
   ): string | null {
-    if (
-      !isWithinSameDay(
-        schedule.startTime,
-        schedule.duration + schedule.travelTime,
-      )
-    ) {
-      return "This activity and its travel time would run past midnight. Please choose an earlier start time or shorter duration.";
+    if (!isWithinSameDay(schedule.startTime, schedule.duration)) {
+      return "This activity would run past midnight. Please choose an earlier start time or shorter duration.";
     }
 
     const conflict = findTimeClash(schedule, excludeItemId);
@@ -411,24 +401,6 @@ function Planner({
     excludeItemId?: string,
   ): boolean {
     return getScheduleError(schedule, excludeItemId) === null;
-  }
-
-  // Travel time from this place to the next stop that day, from walking distance.
-  function suggestTravelTime(place: Place, schedule: Schedule): number {
-    const start = timeToMinutes(schedule.startTime);
-
-    const nextStop = itinerary
-      .filter(
-        (item) =>
-          item.date === schedule.date && timeToMinutes(item.startTime) > start,
-      )
-      .sort(
-        (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
-      )[0];
-
-    const walk = nextStop ? estimateWalk(place, nextStop.place) : null;
-
-    return walk ? toTravelTimeOption(walk.minutes) : 0;
   }
 
   function handleAddPlace(place: Place, schedule: Schedule): string | null {
@@ -713,9 +685,6 @@ function Planner({
                       bookedDates={getBookedDates(place.id)}
                       unavailableDates={getUnavailableDatesFor(place)}
                       isTimeAvailable={(schedule) => isTimeAvailable(schedule)}
-                      suggestTravelTime={(schedule) =>
-                        suggestTravelTime(place, schedule)
-                      }
                       onAdd={(schedule) => handleAddPlace(place, schedule)}
                       cityName={city.name}
                       {...(place.source === "custom" && {
@@ -791,6 +760,14 @@ function Planner({
                       current.filter((item) => item.id !== itemId),
                     ),
                   onEdit: handleEditItem,
+                  onTravelTimeChange: (itemId, minutes) =>
+                    setItinerary((current) =>
+                      current.map((item) =>
+                        item.id === itemId
+                          ? { ...item, travelTime: minutes }
+                          : item,
+                      ),
+                    ),
                   onNoteChange: (itemId, note) =>
                     setItinerary((current) =>
                       current.map((item) =>

@@ -3,7 +3,6 @@ import type { Schedule, Trip } from "../data/types";
 import { getTripDays } from "../utils/dates";
 import {
   DURATION_OPTIONS,
-  TRAVEL_TIME_OPTIONS,
   findAvailableTime,
   formatDuration,
 } from "../utils/time";
@@ -172,30 +171,6 @@ function ScheduleFields({
           {durationOptions.map((minutes) => (
             <option key={minutes} value={minutes}>
               {formatDuration(minutes)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mt-3">
-        <label
-          className="block text-xs font-medium tracking-wider text-slate-500 uppercase"
-          htmlFor={`${id}-travel`}
-        >
-          Travel time afterwards
-        </label>
-
-        <select
-          id={`${id}-travel`}
-          value={value.travelTime}
-          onChange={(event) =>
-            onChange({ ...value, travelTime: Number(event.target.value) })
-          }
-          className="mt-1 border bg-white p-2"
-        >
-          {TRAVEL_TIME_OPTIONS.map((minutes) => (
-            <option key={minutes} value={minutes}>
-              {minutes === 0 ? "None" : formatDuration(minutes)}
             </option>
           ))}
         </select>
