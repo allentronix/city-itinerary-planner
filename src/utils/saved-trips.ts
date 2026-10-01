@@ -7,6 +7,7 @@ import type {
   Schedule,
   Trip,
 } from "../data/types";
+import { getCloudSink } from "./cloud-sync";
 import { daysBetween, getTodayDate, shiftDate } from "./dates";
 
 const STORAGE_KEY = "itiplanner.trips";
@@ -129,32 +130,43 @@ export function saveTrip(
     updatedAt: now,
   };
 
-  return writeTrips(
+  const saved = writeTrips(
     existing
       ? trips.map((saved) => (saved.id === trip.id ? savedTrip : saved))
       : [...trips, savedTrip],
   );
+
+  if (saved) {
+    getCloudSink()?.saveTrip(savedTrip);
+  }
+
+  return saved;
 }
 
 export function deleteSavedTrip(id: string): boolean {
-  return writeTrips(loadTrips().filter((trip) => trip.id !== id));
+  const deleted = writeTrips(loadTrips().filter((trip) => trip.id !== id));
+
+  if (deleted) {
+    getCloudSink()?.deleteTrip(id);
+  }
+
+  return deleted;
 }
 
 // An empty name removes it, so the city name shows again.
 export function renameSavedTrip(id: string, name: string): boolean {
-  const trimmed = name.trim();
+  const trip = getSavedTrip(id);
 
-  return writeTrips(
-    loadTrips().map((trip) =>
-      trip.id === id
-        ? {
-            ...trip,
-            name: trimmed || undefined,
-            updatedAt: new Date().toISOString(),
-          }
-        : trip,
-    ),
-  );
+  if (!trip) {
+    return false;
+  }
+
+  return saveTrip({ ...trip, name: name.trim() || undefined });
+}
+
+// Replaces this browser's copy with the account's, without sending it back.
+export function replaceTrips(trips: SavedTrip[]): boolean {
+  return writeTrips(trips);
 }
 
 export function getTripDisplayName(trip: SavedTrip, city?: City): string {

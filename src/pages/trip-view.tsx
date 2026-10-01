@@ -4,32 +4,41 @@ import Itinerary from "../components/itinerary";
 import PageBanner from "../components/page-banner";
 import { buttonVariants } from "../components/ui/button";
 import { cn } from "../lib/utils";
+import { useIsLoadingTrips } from "../hooks/use-auth";
 import { useCityPhoto } from "../hooks/use-city-photo";
+import { useSavedTrips } from "../hooks/use-saved-trips";
 import { formatDateRange, getTripDates } from "../utils/dates";
 import {
-  getSavedTrip,
   getTripCity,
   getTripDisplayName,
   toItinerary,
 } from "../utils/saved-trips";
 import NotFound from "./not-found";
+import TripLoading from "./trip-loading";
 
 // A read-only view of a saved trip, from /trips/:tripId: just the plan, for
 // checking on the go. Editing happens at /trips/:tripId/edit.
 function TripViewPage() {
   const { tripId = "" } = useParams();
+  const isLoadingTrips = useIsLoadingTrips();
+
+  // Follows the saved trip, so changes from another device show up here.
+  const found = useSavedTrips().find((trip) => trip.id === tripId);
 
   const loaded = useMemo(() => {
-    const savedTrip = getSavedTrip(tripId);
-    const city = savedTrip ? getTripCity(savedTrip) : undefined;
+    const city = found ? getTripCity(found) : undefined;
 
-    return savedTrip && city ? { savedTrip, city } : null;
-  }, [tripId]);
+    return found && city ? { savedTrip: found, city } : null;
+  }, [found]);
 
   const photo = useCityPhoto(loaded?.city);
 
   if (!loaded) {
-    return <NotFound title="Trip not found" />;
+    return isLoadingTrips ? (
+      <TripLoading />
+    ) : (
+      <NotFound title="Trip not found" />
+    );
   }
 
   const { savedTrip, city } = loaded;

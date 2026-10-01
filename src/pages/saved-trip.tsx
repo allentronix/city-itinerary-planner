@@ -1,23 +1,35 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import Planner from "../components/planner";
+import { useIsLoadingTrips } from "../hooks/use-auth";
+import { useSavedTrips } from "../hooks/use-saved-trips";
 import { getSavedTrip, getTripCity, toItinerary } from "../utils/saved-trips";
 import NotFound from "./not-found";
+import TripLoading from "./trip-loading";
 
 // Opens a saved trip from /trips/:tripId; changes save automatically.
 function SavedTripPage() {
   const { tripId = "" } = useParams();
+  const isLoadingTrips = useIsLoadingTrips();
 
-  // Read once per trip: the planner keeps its own state and saves changes itself.
+  // Whether the trip is here yet: on a new device it arrives from the account.
+  const exists = useSavedTrips().some((trip) => trip.id === tripId);
+
+  // Read once the trip is here: the planner keeps its own state and saves
+  // changes itself.
   const loaded = useMemo(() => {
-    const savedTrip = getSavedTrip(tripId);
+    const savedTrip = exists ? getSavedTrip(tripId) : undefined;
     const city = savedTrip ? getTripCity(savedTrip) : undefined;
 
     return savedTrip && city ? { savedTrip, city } : null;
-  }, [tripId]);
+  }, [tripId, exists]);
 
   if (!loaded) {
-    return <NotFound title="Trip not found" />;
+    return isLoadingTrips ? (
+      <TripLoading />
+    ) : (
+      <NotFound title="Trip not found" />
+    );
   }
 
   const { savedTrip, city } = loaded;

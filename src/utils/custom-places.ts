@@ -1,4 +1,5 @@
 import type { Place } from "../data/types";
+import { getCloudSink } from "./cloud-sync";
 
 // Places travellers add themselves, kept in this browser for each city, so
 // they show up again in every trip to that city.
@@ -12,7 +13,7 @@ export const MAX_PLACE_DESCRIPTION_LENGTH = 300;
 export const MAX_PLACE_ADDRESS_LENGTH = 120;
 
 // Places by city id.
-type CustomPlacesByCity = Record<string, Place[]>;
+export type CustomPlacesByCity = Record<string, Place[]>;
 
 interface StoredCustomPlaces {
   version: typeof STORAGE_VERSION;
@@ -77,13 +78,7 @@ export function subscribeToCustomPlaces(onChange: () => void): () => void {
   };
 }
 
-function writeCityPlaces(cityId: string, places: Place[]): boolean {
-  const all = { ...loadCustomPlaces(), [cityId]: places };
-
-  if (places.length === 0) {
-    delete all[cityId];
-  }
-
+function writeAllPlaces(all: CustomPlacesByCity): boolean {
   const data: StoredCustomPlaces = { version: STORAGE_VERSION, places: all };
 
   try {
@@ -95,6 +90,21 @@ function writeCityPlaces(cityId: string, places: Place[]): boolean {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 
   return true;
+}
+
+function writeCityPlaces(cityId: string, places: Place[]): boolean {
+  const all = { ...loadCustomPlaces(), [cityId]: places };
+
+  if (places.length === 0) {
+    delete all[cityId];
+  }
+
+  return writeAllPlaces(all);
+}
+
+// Replaces this browser's copy with the account's, without sending it back.
+export function replaceCustomPlaces(all: CustomPlacesByCity): boolean {
+  return writeAllPlaces(all);
 }
 
 export type CustomPlaceFields = Pick<
@@ -127,7 +137,13 @@ export function addCustomPlace(
 
   const places = loadCustomPlaces()[cityId] ?? [];
 
-  return writeCityPlaces(cityId, [...places, place]) ? place : null;
+  if (!writeCityPlaces(cityId, [...places, place])) {
+    return null;
+  }
+
+  getCloudSink()?.saveCustomPlace(cityId, place);
+
+  return place;
 }
 
 // Returns the updated place, or null if saving failed.
@@ -139,19 +155,31 @@ export function updateCustomPlace(
   const updated: Place = { ...place, ...cleanFields(fields) };
   const places = loadCustomPlaces()[cityId] ?? [];
 
-  return writeCityPlaces(
-    cityId,
-    places.map((existing) => (existing.id === place.id ? updated : existing)),
-  )
-    ? updated
-    : null;
+  if (
+    !writeCityPlaces(
+      cityId,
+      places.map((existing) => (existing.id === place.id ? updated : existing)),
+    )
+  ) {
+    return null;
+  }
+
+  getCloudSink()?.saveCustomPlace(cityId, updated);
+
+  return updated;
 }
 
 export function deleteCustomPlace(cityId: string, placeId: string): boolean {
   const places = loadCustomPlaces()[cityId] ?? [];
 
-  return writeCityPlaces(
+  const deleted = writeCityPlaces(
     cityId,
     places.filter((place) => place.id !== placeId),
   );
+
+  if (deleted) {
+    getCloudSink()?.deleteCustomPlace(placeId);
+  }
+
+  return deleted;
 }

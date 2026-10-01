@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useSavedTrips } from "../hooks/use-saved-trips";
+import AccountMenu from "./account-menu";
 
 function focusCityField() {
   document.getElementById("city")?.focus();
@@ -89,6 +90,8 @@ function Navbar() {
             About
           </NavLink>
 
+          <AccountMenu layout="desktop" isOverHero={isOverHero} />
+
           <Link
             to="/"
             onClick={focusCityField}
@@ -133,6 +136,8 @@ function Navbar() {
           <NavLink to="/about" className={mobileLinkClass} onClick={closeMenu}>
             About
           </NavLink>
+
+          <AccountMenu layout="mobile" onDone={closeMenu} />
 
           <div className="px-6 pt-2 pb-5">
             <Link
