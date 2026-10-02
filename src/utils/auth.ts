@@ -21,8 +21,8 @@ export type AuthState =
     };
 
 // "signed-in": this browser's trips are a copy of the account's, so Firebase
-// loads on the next visit. "pending": left for a Google sign-in redirect.
-type RememberedSignIn = "signed-in" | "pending";
+// loads on the next visit.
+type RememberedSignIn = "signed-in";
 
 const SIGNED_IN_KEY = "itiplanner.signed-in";
 
@@ -47,7 +47,7 @@ export function getRememberedSignIn(): RememberedSignIn | null {
   try {
     const value = localStorage.getItem(SIGNED_IN_KEY);
 
-    return value === "signed-in" || value === "pending" ? value : null;
+    return value === "signed-in" ? value : null;
   } catch {
     return null;
   }
@@ -92,28 +92,70 @@ export function subscribeToAuth(onChange: () => void): () => void {
   return () => listeners.delete(onChange);
 }
 
-function loadSession() {
-  return import("../lib/firebase-session");
+type Session = typeof import("../lib/firebase-session");
+
+// Kept once loaded, so signing in can open Google's window straight from the
+// tap. Browsers block windows opened after waiting on the network.
+let session: Session | null = null;
+let sessionRequest: Promise<Session> | null = null;
+let readyRequest: Promise<void> | null = null;
+
+function loadSession(): Promise<Session> {
+  sessionRequest ??= import("../lib/firebase-session").then(
+    (loaded) => (session = loaded),
+    (error: unknown) => {
+      // Let a later attempt try the download again.
+      sessionRequest = null;
+      throw error;
+    },
+  );
+
+  return sessionRequest;
 }
 
 // Restores a sign-in from an earlier visit. Called once when the app starts.
 export function restoreSignIn() {
   if (state.status === "loading") {
     loadSession()
-      .then((session) => session.start())
+      .then((loaded) => loaded.start())
       .catch(() => setAuthState({ status: "signed-out" }));
   }
 }
 
-// Returns an error message, or null once signed in (or the popup was closed).
-export async function signIn(): Promise<string | null> {
-  try {
-    const session = await loadSession();
+// Downloads and sets up Firebase ahead of the tap on "Continue with Google".
+export function prepareSignIn(): Promise<void> {
+  readyRequest ??= loadSession()
+    .then((loaded) => loaded.prepare())
+    .catch((error: unknown) => {
+      readyRequest = null;
+      throw error;
+    });
 
-    return await session.signIn();
-  } catch {
-    return "Couldn't load sign-in. Check your connection and try again.";
+  return readyRequest;
+}
+
+export function isSignInReady(): boolean {
+  return session?.isPrepared() ?? false;
+}
+
+// Google blocks its sign-in inside apps' built-in browsers (Instagram,
+// Facebook, TikTok and others), so people need to open the page elsewhere.
+export function isInAppBrowser(): boolean {
+  return /FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|TikTok|musical_ly|Twitter|LinkedInApp|; wv\)/i.test(
+    navigator.userAgent,
+  );
+}
+
+// Returns an error message, or null once signed in (or the window was closed).
+// Not async on purpose: Google's window has to open within the tap.
+export function signIn(): Promise<string | null> {
+  if (!session?.isPrepared()) {
+    return Promise.resolve(
+      "Sign-in is still getting ready. Please try again in a moment.",
+    );
   }
+
+  return session.signIn();
 }
 
 export async function signOut() {

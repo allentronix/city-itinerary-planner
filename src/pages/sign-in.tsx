@@ -3,7 +3,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import PageBanner from "../components/page-banner";
 import { Button, buttonVariants } from "../components/ui/button";
 import { useAuth } from "../hooks/use-auth";
-import { getSyncMessage, signIn, signOut } from "../utils/auth";
+import {
+  getSyncMessage,
+  isInAppBrowser,
+  isSignInReady,
+  prepareSignIn,
+  signIn,
+  signOut,
+} from "../utils/auth";
 
 const BENEFITS = [
   "Your trips on your phone, laptop and any other device.",
@@ -54,6 +61,30 @@ function SignInPage() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState("");
 
+  const [isReady, setIsReady] = useState(isSignInReady);
+  const [hasLoadFailed, setHasLoadFailed] = useState(false);
+  const [hasCopiedLink, setHasCopiedLink] = useState(false);
+  const isInApp = isInAppBrowser();
+
+  // Get Google sign-in ready while people read the page, so the tap can open
+  // Google's window straight away. Phones block it if it opens late.
+  useEffect(() => {
+    if (auth.status !== "signed-out" || isReady || hasLoadFailed || isInApp) {
+      return;
+    }
+
+    let isCurrent = true;
+
+    prepareSignIn().then(
+      () => isCurrent && setIsReady(true),
+      () => isCurrent && setHasLoadFailed(true),
+    );
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [auth.status, isReady, hasLoadFailed, isInApp]);
+
   // Set once the Google button is pressed, so arriving here already signed
   // in shows the account instead of jumping away.
   const hasPressedSignInRef = useRef(false);
@@ -85,15 +116,25 @@ function SignInPage() {
     };
   }, [isSigningIn]);
 
-  async function handleSignIn() {
+  function handleSignIn() {
+    // First, before anything else: Google's window must open within the tap.
+    const request = signIn();
+
     hasPressedSignInRef.current = true;
     setIsSigningIn(true);
     setError("");
 
-    const message = await signIn();
+    void request.then((message) => {
+      setIsSigningIn(false);
+      setError(message ?? "");
+    });
+  }
 
-    setIsSigningIn(false);
-    setError(message ?? "");
+  function handleCopyLink() {
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => setHasCopiedLink(true))
+      .catch(() => setHasCopiedLink(false));
   }
 
   return (
@@ -160,14 +201,46 @@ function SignInPage() {
                 ))}
               </ul>
 
-              <Button
-                variant="outline"
-                className="mt-6 h-auto w-full gap-3 py-3 text-base"
-                onClick={handleSignIn}
-              >
-                <GoogleLogo />
-                {isSigningIn ? "Signing in…" : "Continue with Google"}
-              </Button>
+              {isInApp ? (
+                <div className="mt-6 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p>
+                    Google sign-in doesn't work inside this app's browser. Open
+                    this page in Safari or Chrome to sign in.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-3 h-auto w-full py-3 text-base"
+                    onClick={handleCopyLink}
+                  >
+                    {hasCopiedLink ? "Link copied" : "Copy link"}
+                  </Button>
+                </div>
+              ) : hasLoadFailed ? (
+                <div className="mt-6 border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                  <p>Couldn't load sign-in. Check your connection.</p>
+                  <Button
+                    variant="outline"
+                    className="mt-3"
+                    onClick={() => setHasLoadFailed(false)}
+                  >
+                    Try again
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="mt-6 h-auto w-full gap-3 py-3 text-base"
+                  disabled={!isReady}
+                  onClick={handleSignIn}
+                >
+                  <GoogleLogo />
+                  {!isReady
+                    ? "Getting sign-in ready…"
+                    : isSigningIn
+                      ? "Signing in…"
+                      : "Continue with Google"}
+                </Button>
+              )}
 
               {error && (
                 <p role="alert" className="mt-3 text-sm text-red-600">

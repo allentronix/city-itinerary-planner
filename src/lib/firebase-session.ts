@@ -2,11 +2,11 @@ import { initializeApp } from "firebase/app";
 import {
   deleteUser,
   getAuth,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
   reauthenticateWithPopup,
   signInWithPopup,
-  signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
@@ -66,6 +66,7 @@ const db = initializeFirestore(app, {
 });
 
 let hasStarted = false;
+let isReady = false;
 let stopSync: (() => void) | null = null;
 
 function tripsRef(uid: string) {
@@ -242,6 +243,23 @@ function handleSignedOut() {
   setAuthState({ status: "signed-out" });
 }
 
+// Gets everything Google's sign-in window needs ready ahead of the tap, so
+// it opens straight away. Opening it after loading would get it blocked.
+export async function prepare() {
+  start();
+  await auth.authStateReady();
+
+  // Loads Firebase's sign-in helper frame (it also finishes any sign-in
+  // left from an earlier visit).
+  await getRedirectResult(auth).catch(() => null);
+
+  isReady = true;
+}
+
+export function isPrepared(): boolean {
+  return isReady;
+}
+
 export function start() {
   if (hasStarted) {
     return;
@@ -299,11 +317,10 @@ export async function signIn(): Promise<string | null> {
       return null;
     }
 
-    // Some phone browsers block popups; go to Google's page and come back instead.
+    // Going to Google's page and back instead isn't reliable on phones
+    // (browsers block the storage it needs), but a second tap opens the window.
     if (code === "auth/popup-blocked") {
-      rememberSignIn("pending");
-      await signInWithRedirect(auth, provider);
-      return null;
+      return "Your browser blocked the Google sign-in window. Tap Continue with Google again.";
     }
 
     if (code === "auth/unauthorized-domain") {
