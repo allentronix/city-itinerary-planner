@@ -16,7 +16,8 @@ export type PlacesEntry =
   | { status: "ready"; places: Place[] }
   | { status: "error"; message: string };
 
-const BROWSER_CACHE_PREFIX = "itiplanner.places.v1";
+// v2: places carry photo sources.
+const BROWSER_CACHE_PREFIX = "itiplanner.places.v2";
 const BROWSER_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {

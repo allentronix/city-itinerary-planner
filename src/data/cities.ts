@@ -11,6 +11,7 @@ const cities: City[] = [
     places: [
       {
         id: "parliament",
+        wikidataId: "Q11819",
         name: "Hungarian Parliament Building",
         category: "attraction",
         description:
@@ -21,6 +22,7 @@ const cities: City[] = [
       },
       {
         id: "buda-castle",
+        wikidataId: "Q46313",
         name: "Buda Castle",
         category: "attraction",
         description: "A historic castle complex with views across Budapest.",
@@ -30,6 +32,7 @@ const cities: City[] = [
       },
       {
         id: "fishermans-bastion",
+        wikidataId: "Q493117",
         name: "Fisherman's Bastion",
         category: "attraction",
         description:
@@ -40,6 +43,7 @@ const cities: City[] = [
       },
       {
         id: "szechenyi-baths",
+        wikidataId: "Q194783",
         name: "Széchenyi Thermal Baths",
         category: "attraction",
         description:
@@ -50,6 +54,7 @@ const cities: City[] = [
       },
       {
         id: "gundel",
+        wikidataId: "Q752482",
         name: "Gundel",
         category: "restaurant",
         description:
@@ -60,6 +65,7 @@ const cities: City[] = [
       },
       {
         id: "borkonyha",
+        wikidataId: "Q88590520",
         name: "Borkonyha Winekitchen",
         category: "restaurant",
         description:
@@ -70,6 +76,7 @@ const cities: City[] = [
       },
       {
         id: "new-york-cafe",
+        wikidataId: "Q109907076",
         name: "New York Café",
         category: "cafe",
         description:
@@ -100,6 +107,7 @@ const cities: City[] = [
     places: [
       {
         id: "colosseum",
+        wikidataId: "Q10285",
         name: "Colosseum",
         category: "attraction",
         description:
@@ -110,6 +118,7 @@ const cities: City[] = [
       },
       {
         id: "trevi-fountain",
+        wikidataId: "Q185382",
         name: "Trevi Fountain",
         category: "attraction",
         description:
@@ -120,6 +129,7 @@ const cities: City[] = [
       },
       {
         id: "pantheon",
+        wikidataId: "Q99309",
         name: "Pantheon",
         category: "attraction",
         description:
@@ -130,6 +140,7 @@ const cities: City[] = [
       },
       {
         id: "vatican-museums",
+        wikidataId: "Q182955",
         name: "Vatican Museums",
         category: "attraction",
         description: "A vast museum complex that includes the Sistine Chapel.",
@@ -189,6 +200,7 @@ const cities: City[] = [
     places: [
       {
         id: "eiffel-tower",
+        wikidataId: "Q243",
         name: "Eiffel Tower",
         category: "attraction",
         description:
@@ -199,6 +211,7 @@ const cities: City[] = [
       },
       {
         id: "louvre",
+        wikidataId: "Q19675",
         name: "Louvre Museum",
         category: "attraction",
         description:
@@ -209,6 +222,7 @@ const cities: City[] = [
       },
       {
         id: "notre-dame",
+        wikidataId: "Q2981",
         name: "Notre-Dame Cathedral",
         category: "attraction",
         description:
@@ -219,6 +233,7 @@ const cities: City[] = [
       },
       {
         id: "sacre-coeur",
+        wikidataId: "Q28785",
         name: "Sacré-Cœur",
         category: "attraction",
         description:
@@ -229,6 +244,7 @@ const cities: City[] = [
       },
       {
         id: "bouillon-chartier",
+        wikidataId: "Q1071456",
         name: "Bouillon Chartier",
         category: "restaurant",
         description:
@@ -249,6 +265,7 @@ const cities: City[] = [
       },
       {
         id: "cafe-de-flore",
+        wikidataId: "Q1025686",
         name: "Café de Flore",
         category: "cafe",
         description:
@@ -259,6 +276,7 @@ const cities: City[] = [
       },
       {
         id: "les-deux-magots",
+        wikidataId: "Q1147912",
         name: "Les Deux Magots",
         category: "cafe",
         description:
@@ -279,6 +297,7 @@ const cities: City[] = [
     places: [
       {
         id: "tower-of-london",
+        wikidataId: "Q62378",
         name: "Tower of London",
         category: "attraction",
         description:
@@ -289,6 +308,7 @@ const cities: City[] = [
       },
       {
         id: "british-museum",
+        wikidataId: "Q6373",
         name: "British Museum",
         category: "attraction",
         description:
@@ -299,6 +319,7 @@ const cities: City[] = [
       },
       {
         id: "big-ben",
+        wikidataId: "Q41225",
         name: "Big Ben and the Houses of Parliament",
         category: "attraction",
         description:
@@ -309,6 +330,7 @@ const cities: City[] = [
       },
       {
         id: "westminster-abbey",
+        wikidataId: "Q5933",
         name: "Westminster Abbey",
         category: "attraction",
         description:
@@ -329,6 +351,7 @@ const cities: City[] = [
       },
       {
         id: "rules",
+        wikidataId: "Q7379013",
         name: "Rules",
         category: "restaurant",
         description:
@@ -349,6 +372,7 @@ const cities: City[] = [
       },
       {
         id: "bar-italia",
+        wikidataId: "Q4857936",
         name: "Bar Italia",
         category: "cafe",
         description:
@@ -369,6 +393,7 @@ const cities: City[] = [
     places: [
       {
         id: "sagrada-familia",
+        wikidataId: "Q48435",
         name: "Sagrada Família",
         category: "attraction",
         description:
@@ -379,6 +404,7 @@ const cities: City[] = [
       },
       {
         id: "park-guell",
+        wikidataId: "Q212867",
         name: "Park Güell",
         category: "attraction",
         description:
@@ -389,6 +415,7 @@ const cities: City[] = [
       },
       {
         id: "la-rambla",
+        wikidataId: "Q850593",
         name: "La Rambla",
         category: "attraction",
         description:
@@ -399,6 +426,7 @@ const cities: City[] = [
       },
       {
         id: "casa-batllo",
+        wikidataId: "Q461371",
         name: "Casa Batlló",
         category: "attraction",
         description:
@@ -419,6 +447,7 @@ const cities: City[] = [
       },
       {
         id: "el-xampanyet",
+        wikidataId: "Q47171062",
         name: "El Xampanyet",
         category: "restaurant",
         description:
@@ -429,6 +458,7 @@ const cities: City[] = [
       },
       {
         id: "els-quatre-gats",
+        wikidataId: "Q1333395",
         name: "Els Quatre Gats",
         category: "cafe",
         description:
@@ -439,6 +469,7 @@ const cities: City[] = [
       },
       {
         id: "granja-viader",
+        wikidataId: "Q47170829",
         name: "Granja M. Viader",
         category: "cafe",
         description:
@@ -459,6 +490,7 @@ const cities: City[] = [
     places: [
       {
         id: "statue-of-liberty",
+        wikidataId: "Q9202",
         name: "Statue of Liberty",
         category: "attraction",
         description:
@@ -469,6 +501,7 @@ const cities: City[] = [
       },
       {
         id: "central-park",
+        wikidataId: "Q160409",
         name: "Central Park",
         category: "attraction",
         description:
@@ -479,6 +512,7 @@ const cities: City[] = [
       },
       {
         id: "empire-state-building",
+        wikidataId: "Q9188",
         name: "Empire State Building",
         category: "attraction",
         description:
@@ -489,6 +523,7 @@ const cities: City[] = [
       },
       {
         id: "metropolitan-museum",
+        wikidataId: "Q160236",
         name: "The Metropolitan Museum of Art",
         category: "attraction",
         description:
@@ -499,6 +534,7 @@ const cities: City[] = [
       },
       {
         id: "katzs-deli",
+        wikidataId: "Q2611788",
         name: "Katz's Delicatessen",
         category: "restaurant",
         description:
@@ -509,6 +545,7 @@ const cities: City[] = [
       },
       {
         id: "joes-pizza",
+        wikidataId: "Q20979290",
         name: "Joe's Pizza",
         category: "restaurant",
         description:
@@ -519,6 +556,7 @@ const cities: City[] = [
       },
       {
         id: "caffe-reggio",
+        wikidataId: "Q5017150",
         name: "Caffe Reggio",
         category: "cafe",
         description:
@@ -549,6 +587,7 @@ const cities: City[] = [
     places: [
       {
         id: "senso-ji",
+        wikidataId: "Q615183",
         name: "Sensō-ji",
         category: "attraction",
         description:
@@ -559,6 +598,7 @@ const cities: City[] = [
       },
       {
         id: "meiji-shrine",
+        wikidataId: "Q287165",
         name: "Meiji Shrine",
         category: "attraction",
         description: "A Shinto shrine set in a forested park near Harajuku.",
@@ -568,6 +608,7 @@ const cities: City[] = [
       },
       {
         id: "shibuya-crossing",
+        wikidataId: "Q21083961",
         name: "Shibuya Crossing",
         category: "attraction",
         description:
@@ -578,6 +619,7 @@ const cities: City[] = [
       },
       {
         id: "tokyo-skytree",
+        wikidataId: "Q57965",
         name: "Tokyo Skytree",
         category: "attraction",
         description:
@@ -636,6 +678,7 @@ const cities: City[] = [
     places: [
       {
         id: "hagia-sophia",
+        wikidataId: "Q12506",
         name: "Hagia Sophia",
         category: "attraction",
         description:
@@ -646,6 +689,7 @@ const cities: City[] = [
       },
       {
         id: "blue-mosque",
+        wikidataId: "Q80541",
         name: "Blue Mosque",
         category: "attraction",
         description:
@@ -656,6 +700,7 @@ const cities: City[] = [
       },
       {
         id: "grand-bazaar",
+        wikidataId: "Q505954",
         name: "Grand Bazaar",
         category: "attraction",
         description:
@@ -666,6 +711,7 @@ const cities: City[] = [
       },
       {
         id: "topkapi-palace",
+        wikidataId: "Q170495",
         name: "Topkapi Palace",
         category: "attraction",
         description:
@@ -696,6 +742,7 @@ const cities: City[] = [
       },
       {
         id: "mandabatmaz",
+        wikidataId: "Q135428968",
         name: "Mandabatmaz",
         category: "cafe",
         description:
@@ -726,6 +773,7 @@ const cities: City[] = [
     places: [
       {
         id: "prague-castle",
+        wikidataId: "Q193369",
         name: "Prague Castle",
         category: "attraction",
         description:
@@ -736,6 +784,7 @@ const cities: City[] = [
       },
       {
         id: "charles-bridge",
+        wikidataId: "Q204871",
         name: "Charles Bridge",
         category: "attraction",
         description:
@@ -746,6 +795,7 @@ const cities: City[] = [
       },
       {
         id: "old-town-square",
+        wikidataId: "Q421678",
         name: "Old Town Square",
         category: "attraction",
         description:
@@ -756,6 +806,7 @@ const cities: City[] = [
       },
       {
         id: "jewish-quarter",
+        wikidataId: "Q753292",
         name: "Josefov",
         category: "attraction",
         description:
@@ -776,6 +827,7 @@ const cities: City[] = [
       },
       {
         id: "u-fleku",
+        wikidataId: "Q1581385",
         name: "U Fleků",
         category: "restaurant",
         description:
@@ -786,6 +838,7 @@ const cities: City[] = [
       },
       {
         id: "cafe-louvre",
+        wikidataId: "Q12879009",
         name: "Café Louvre",
         category: "cafe",
         description:
@@ -816,6 +869,7 @@ const cities: City[] = [
     places: [
       {
         id: "acropolis",
+        wikidataId: "Q131013",
         name: "Acropolis",
         category: "attraction",
         description:
@@ -826,6 +880,7 @@ const cities: City[] = [
       },
       {
         id: "acropolis-museum",
+        wikidataId: "Q421084",
         name: "Acropolis Museum",
         category: "attraction",
         description:
@@ -836,6 +891,7 @@ const cities: City[] = [
       },
       {
         id: "plaka",
+        wikidataId: "Q1231816",
         name: "Plaka",
         category: "attraction",
         description:
@@ -846,6 +902,7 @@ const cities: City[] = [
       },
       {
         id: "ancient-agora",
+        wikidataId: "Q395367",
         name: "Ancient Agora",
         category: "attraction",
         description:
@@ -884,6 +941,7 @@ const cities: City[] = [
       },
       {
         id: "little-kook",
+        wikidataId: "Q125763555",
         name: "Little Kook",
         category: "cafe",
         description:

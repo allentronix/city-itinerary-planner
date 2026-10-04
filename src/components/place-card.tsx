@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import ScheduleFields from "./schedule-fields";
 import CustomPlaceForm from "./custom-place-form";
+import PlacePhoto from "./place-photo";
 import type { Place, Schedule, Trip } from "../data/types";
 import { getSuggestedStartTime } from "../utils/best-time";
 import type { CustomPlaceFields } from "../utils/custom-places";
@@ -124,6 +125,9 @@ function PlaceCard({
     <div
       className={`border bg-white p-5 ${isCustom ? "border-l-4 border-l-amber-400" : ""}`}
     >
+      {/* Full width, edge to edge above the card's text. */}
+      <PlacePhoto place={place} variant="card" className="-mx-5 -mt-5 mb-4" />
+
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-medium tracking-wider text-emerald-700 uppercase">
           {CATEGORY_LABELS[place.category]}

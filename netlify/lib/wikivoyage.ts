@@ -25,6 +25,9 @@ export interface Activity {
   website?: string;
   lat?: number;
   lon?: number;
+  wikidataId?: string;
+  // A Wikimedia Commons file name, e.g. "Colosseo 2020.jpg".
+  image?: string;
 }
 
 async function getJson<T>(base: string, params: Record<string, string>) {
@@ -232,6 +235,17 @@ function parseCoordinate(value: string | undefined, limit: number) {
     : undefined;
 }
 
+// "File:Colosseo 2020.jpg" or "Colosseo 2020.jpg" -> "Colosseo 2020.jpg".
+function parseImageName(value: string | undefined): string | undefined {
+  const name = value?.replace(/^(File|Image):/i, "").trim();
+
+  return name &&
+    /\.(jpe?g|png|webp|gif|tiff?)$/i.test(name) &&
+    name.length < 240
+    ? name
+    : undefined;
+}
+
 function parseActivities(section: string): Activity[] {
   const activities: Activity[] = [];
 
@@ -265,6 +279,10 @@ function parseActivities(section: string): Activity[] {
       website: website && /^https?:\/\//.test(website) ? website : undefined,
       lat: parseCoordinate(parameters.lat, 90),
       lon: parseCoordinate(parameters.long, 180),
+      wikidataId: /^Q\d+$/.test(parameters.wikidata ?? "")
+        ? parameters.wikidata
+        : undefined,
+      image: parseImageName(parameters.image),
     });
   }
 

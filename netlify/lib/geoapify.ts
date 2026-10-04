@@ -94,3 +94,36 @@ export async function withCache<T>(
 
   return data;
 }
+
+// Cached values for several keys at once; keys missing or too old are left out.
+export async function readCacheMany<T>(
+  keys: string[],
+  maxAgeMs: number,
+): Promise<Map<string, T>> {
+  const store = getStore({ name: CACHE_STORE, consistency: "strong" });
+
+  const entries = await Promise.all(
+    keys.map(
+      async (key) =>
+        [
+          key,
+          (await store.get(encodeURIComponent(key), {
+            type: "json",
+          })) as CacheEntry<T> | null,
+        ] as const,
+    ),
+  );
+
+  return new Map(
+    entries
+      .filter(([, entry]) => entry && Date.now() - entry.savedAt < maxAgeMs)
+      .map(([key, entry]) => [key, (entry as CacheEntry<T>).data]),
+  );
+}
+
+export async function writeCache<T>(key: string, data: T): Promise<void> {
+  const store = getStore({ name: CACHE_STORE, consistency: "strong" });
+  const entry: CacheEntry<T> = { savedAt: Date.now(), data };
+
+  await store.setJSON(encodeURIComponent(key), entry);
+}

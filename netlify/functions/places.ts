@@ -46,7 +46,8 @@ const PLACE_TYPES: Record<PlaceType, PlaceTypeConfig> = {
 };
 
 const RESULTS_PER_TYPE = 20;
-const CACHE_VERSION = 3;
+// Version 4 added Wikidata ids, for place photos.
+const CACHE_VERSION = 4;
 const MAX_DESCRIPTION_LENGTH = 140;
 const MAX_CUISINES = 2;
 // Cuisine tags that don't say anything useful on a card.
@@ -137,6 +138,7 @@ function getBestTime(type: PlaceType, categories: string[] = []): string {
 
 function toPlace(type: PlaceType, candidate: Candidate): Place {
   const { properties, wikidata } = candidate;
+  const wikidataId = properties.wiki_and_media?.wikidata;
 
   const name =
     wikidata?.label ?? properties.name_international?.en ?? properties.name;
@@ -165,6 +167,7 @@ function toPlace(type: PlaceType, candidate: Candidate): Place {
     lon: properties.lon,
     openingHours: properties.opening_hours,
     website: properties.website,
+    wikidataId: isWikidataId(wikidataId) ? wikidataId : undefined,
   };
 }
 
@@ -308,7 +311,8 @@ function parseCenter(
 
 // --- Things to do (Wikivoyage) ---------------------------------------------
 
-const ACTIVITIES_CACHE_VERSION = 2;
+// Version 3 added photos.
+const ACTIVITIES_CACHE_VERSION = 3;
 
 // Listings with a description come first, then those with a location (for
 // maps and walking times), then those with hours.
@@ -377,6 +381,8 @@ async function loadActivities(wikidataId: string): Promise<Place[]> {
         lon: activity.lon,
         openingHours: activity.hours,
         website: activity.website,
+        wikidataId: activity.wikidataId,
+        photoFile: activity.image,
       };
     });
 }

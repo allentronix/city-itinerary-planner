@@ -193,11 +193,12 @@ function PrivacyPage() {
                 </li>
                 <li>
                   <strong className="font-medium text-slate-900">
-                    Weather and maps:
+                    Weather, maps and photos:
                   </strong>{" "}
                   your browser asks Open-Meteo for the forecast at the trip's
-                  city and loads map images from OpenStreetMap. Like any
-                  website, they see your IP address when it does.
+                  city, and loads map images from OpenStreetMap and place photos
+                  from Wikimedia Commons. Like any website, they see your IP
+                  address when it does.
                 </li>
                 <li>
                   <strong className="font-medium text-slate-900">

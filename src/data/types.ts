@@ -12,6 +12,10 @@ export interface Place {
   lon?: number;
   openingHours?: string;
   website?: string;
+  // Where its photo comes from: the place's Wikidata item (its main photo),
+  // or a Wikimedia Commons file named by Wikivoyage.
+  wikidataId?: string;
+  photoFile?: string;
   // Added by the traveller and kept in this browser. Has the same shape as
   // other places, so it can later be sent in as a suggestion for everyone.
   source?: "custom";

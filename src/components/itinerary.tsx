@@ -27,6 +27,8 @@ import NoteEditor from "./note-editor";
 
 import TravelConnector from "./travel-connector";
 
+import PlacePhoto from "./place-photo";
+
 import EditItineraryItem from "./edit-itinerary-item";
 
 import { Button } from "./ui/button";
@@ -163,7 +165,7 @@ function Itinerary({
               </span>
             </div>
 
-            <div className="border-l pl-4">
+            <div className="min-w-0 flex-1 border-l pl-4">
               <p className="font-serif text-lg">{item.place.name}</p>
 
               {item.place.description && (
@@ -215,6 +217,8 @@ function Itinerary({
                 </div>
               )}
             </div>
+
+            <PlacePhoto place={item.place} variant="thumb" />
           </div>
 
           {actions && editingNoteId === item.id && (
