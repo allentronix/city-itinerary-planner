@@ -558,7 +558,9 @@ function Planner({
 
         {trip ? (
           <div className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-start">
-            <section>
+            {/* min-w-0 on both columns: grid columns otherwise grow to fit
+                their widest content, pushing the page wider than small phones. */}
+            <section className="min-w-0">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <h2 className="font-serif text-3xl tracking-tight">
                   Places to visit
@@ -747,7 +749,7 @@ function Planner({
               )}
             </section>
 
-            <aside className="border bg-slate-50 p-6">
+            <aside className="min-w-0 border bg-slate-50 p-6">
               <Itinerary
                 itinerary={itinerary}
                 trip={trip}

@@ -123,7 +123,8 @@ function PlaceCard({
 
   return (
     <div
-      className={`border bg-white p-5 ${isCustom ? "border-l-4 border-l-amber-400" : ""}`}
+      // break-words: long addresses or links wrap instead of widening the card.
+      className={`border bg-white p-5 break-words ${isCustom ? "border-l-4 border-l-amber-400" : ""}`}
     >
       {/* Full width, edge to edge above the card's text. */}
       <PlacePhoto place={place} variant="card" className="-mx-5 -mt-5 mb-4" />

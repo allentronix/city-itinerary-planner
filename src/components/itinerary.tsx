@@ -165,7 +165,7 @@ function Itinerary({
               </span>
             </div>
 
-            <div className="min-w-0 flex-1 border-l pl-4">
+            <div className="min-w-0 flex-1 border-l pl-4 break-words">
               <p className="font-serif text-lg">{item.place.name}</p>
 
               {item.place.description && (
